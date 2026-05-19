@@ -1,0 +1,2731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Family Rewards">
+<meta name="application-name" content="Family Rewards">
+<meta name="theme-color" content="#6366f1">
+<meta name="description" content="Track kids' activities and weighted reward points across mobile and desktop.">
+<title>Family Reward System</title>
+<!-- Favicon (browser tab icon) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%AD%90%3C/text%3E%3C/svg%3E">
+<!-- Apple Touch Icon: shown when added to iOS/iPadOS home screen (180×180 SVG with gradient + star) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20180%20180%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%236366f1%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23ec4899%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22180%22%20height%3D%22180%22%20rx%3D%2240%22%20fill%3D%22url(%23g)%22%2F%3E%3Ctext%20x%3D%2290%22%20y%3D%22128%22%20text-anchor%3D%22middle%22%20font-size%3D%22110%22%3E%E2%AD%90%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!-- PWA manifest (inlined as data URI so the file stays self-contained) -->
+<link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Family Reward System","short_name":"Rewards","description":"Track kids activities and points","start_url":".","scope":".","display":"standalone","orientation":"portrait","background_color":"%23f6f7fb","theme_color":"%236366f1","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 512 512%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22 x1%3D%220%22 y1%3D%220%22 x2%3D%221%22 y2%3D%221%22%3E%3Cstop offset%3D%220%25%22 stop-color%3D%22%236366f1%22/%3E%3Cstop offset%3D%22100%25%22 stop-color%3D%22%23ec4899%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width%3D%22512%22 height%3D%22512%22 rx%3D%22110%22 fill%3D%22url(%23g)%22/%3E%3Ctext x%3D%22256%22 y%3D%22360%22 text-anchor%3D%22middle%22 font-size%3D%22320%22%3E%E2%AD%90%3C/text%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}'>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --bg-elevated: #ffffff;
+    --bg-soft: #f1f5f9;
+    --border: #e5e7eb;
+    --border-soft: #eef0f4;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --primary: #6366f1;
+    --primary-soft: #eef2ff;
+    --primary-dark: #4f46e5;
+    --success: #10b981;
+    --success-soft: #d1fae5;
+    --danger: #ef4444;
+    --danger-soft: #fee2e2;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --info: #06b6d4;
+    --shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.06);
+    --shadow-lg: 0 10px 30px rgba(15,23,42,0.10);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-lg: 20px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  [data-theme="dark"] {
+    --bg: #0b1020;
+    --bg-elevated: #141b2e;
+    --bg-soft: #1a2238;
+    --border: #2a3454;
+    --border-soft: #232b46;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --primary: #818cf8;
+    --primary-soft: #1e1b4b;
+    --primary-dark: #6366f1;
+    --success: #34d399;
+    --success-soft: #064e3b;
+    --danger: #f87171;
+    --danger-soft: #7f1d1d;
+    --warning: #fbbf24;
+    --warning-soft: #78350f;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 6px 20px rgba(0,0,0,0.25);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    padding-bottom: calc(76px + var(--safe-bottom));
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, select, textarea { font-family: inherit; font-size: 16px; }
+
+  /* Header */
+  header.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: calc(var(--safe-top) + 14px) 16px 12px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .app-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .app-title .star { font-size: 22px; }
+  .header-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    background: var(--bg-soft);
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .icon-btn:hover { background: var(--primary-soft); color: var(--primary); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 14px 16px 8px; }
+
+  /* Tab sections */
+  .tab { display: none; animation: fade .25s ease; }
+  .tab.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* Section title */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 18px 4px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title .right { font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: none; letter-spacing: 0; }
+
+  /* Person picker (Log tab) */
+  .person-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    margin: 0 -2px;
+    scrollbar-width: none;
+  }
+  .person-row::-webkit-scrollbar { display: none; }
+  .person-chip {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px 10px 10px;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border-soft);
+    border-radius: 999px;
+    transition: all .15s;
+    box-shadow: var(--shadow);
+  }
+  .person-chip:active { transform: scale(0.97); }
+  .person-chip.active {
+    border-color: var(--person-color, var(--primary));
+    background: var(--person-soft, var(--primary-soft));
+    color: var(--text);
+  }
+  .person-chip .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--person-color, var(--primary));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; flex-shrink: 0;
+  }
+  .person-chip .name { font-weight: 600; font-size: 14px; }
+  .person-chip .pts { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+  .person-chip.active .pts { color: var(--person-color, var(--primary)); font-weight: 600; }
+
+  /* Hero stat card */
+  .hero-card {
+    background: linear-gradient(135deg, var(--person-color, var(--primary)) 0%, color-mix(in srgb, var(--person-color, var(--primary)) 70%, #000) 100%);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    color: white;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+  }
+  .hero-card .big-emoji {
+    font-size: 44px;
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.18);
+    border-radius: 18px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .hero-card .info { z-index: 1; }
+  .hero-card .info .label { font-size: 13px; opacity: 0.9; }
+  .hero-card .info .total { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .hero-card .info .today { font-size: 13px; opacity: 0.92; margin-top: 2px; }
+
+  /* Activity grid */
+  .category-block { margin-top: 18px; }
+  .category-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+  .category-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .category-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .category-weight {
+    font-size: 11px; color: var(--text-muted);
+    background: var(--bg-soft);
+    padding: 2px 8px; border-radius: 999px;
+    margin-left: auto;
+  }
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .activity-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: var(--shadow);
+    transition: transform .12s, border-color .15s, box-shadow .15s;
+    position: relative;
+    overflow: hidden;
+    min-height: 86px;
+  }
+  .activity-btn:hover { border-color: var(--cat-color, var(--primary)); }
+  .activity-btn:active { transform: scale(0.96); }
+  .activity-btn .row-top {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;
+  }
+  .activity-btn .a-emoji { font-size: 22px; line-height: 1; }
+  .activity-btn .a-pts {
+    font-weight: 700; color: var(--cat-color, var(--primary));
+    font-size: 14px;
+    background: color-mix(in srgb, var(--cat-color, var(--primary)) 12%, transparent);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .activity-btn .a-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .activity-btn.flash {
+    animation: flash 0.55s ease;
+  }
+  @keyframes flash {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.08); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cat-color, var(--primary)) 25%, transparent); }
+    100% { transform: scale(1); }
+  }
+
+  /* Reward state: locked when unaffordable */
+  .activity-btn.locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .activity-btn.locked .a-pts { background: var(--bg-soft); color: var(--text-muted); }
+  .activity-btn .locked-msg {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .activity-btn.reward-btn .a-pts { color: var(--danger); background: var(--danger-soft); }
+  .activity-btn.reward-btn:not(.locked) { border-color: var(--cat-color, var(--primary)); }
+
+  /* Recent activity list */
+  .recent-list {
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-soft);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .recent-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .recent-row:last-child { border-bottom: none; }
+  .recent-row .rr-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 15px; flex-shrink: 0;
+  }
+  .recent-row .rr-main { flex: 1; min-width: 0; }
+  .recent-row .rr-name { font-size: 14px; font-weight: 600; }
+  .recent-row .rr-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .recent-row .rr-pts {
+    font-weight: 700; color: var(--success);
+    font-size: 14px;
+    background: var(--success-soft);
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .recent-row button.del {
+    color: var(--text-dim);
+    padding: 6px; border-radius: 8px;
+    transition: color .12s, background .12s;
+  }
+  .recent-row button.del:hover { color: var(--danger); background: var(--danger-soft); }
+  .recent-row button.del svg { width: 16px; height: 16px; display: block; }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty-state .ico { font-size: 36px; margin-bottom: 8px; }
+
+  /* Stat cards (Dashboard) */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .stat-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow);
+  }
+  .stat-card .sc-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat-card .sc-value {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+    margin-top: 4px;
+  }
+  .stat-card .sc-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Period segmented control */
+  .seg {
+    display: inline-flex;
+    background: var(--bg-soft);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .seg button {
+    padding: 7px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all .15s;
+  }
+  .seg button.active {
+    background: var(--bg-elevated);
+    color: var(--text);
+    box-shadow: var(--shadow);
+  }
+
+  /* Chart cards */
+  .chart-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+  }
+  .chart-card .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chart-card .chart-title .sub { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+  .chart-wrap { position: relative; height: 240px; }
+  .chart-wrap.tall { height: 280px; }
+  .chart-wrap.short { height: 200px; }
+  .chart-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 720px) { .chart-row.two { grid-template-columns: 1fr 1fr; } }
+
+  /* Settings */
+  .settings-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .settings-card h3 {
+    margin: 0;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .settings-card h3 button.add {
+    font-size: 13px;
+    padding: 6px 12px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .settings-card h3 button.add:active { transform: scale(0.96); }
+  .settings-card h3 button.add svg { width: 14px; height: 14px; }
+  .settings-body { padding: 8px 4px; }
+  .list-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+  .list-row:hover { background: var(--bg-soft); }
+  .list-row .lr-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; flex-shrink: 0;
+  }
+  .list-row .lr-name { flex: 1; font-size: 14px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list-row .lr-meta { font-size: 12px; color: var(--text-muted); }
+  .list-row .lr-actions { display: flex; gap: 4px; }
+  .list-row .lr-actions button {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .list-row .lr-actions button:hover { color: var(--text); background: var(--bg-elevated); }
+  .list-row .lr-actions button.del:hover { color: var(--danger); background: var(--danger-soft); }
+  .list-row .lr-actions svg { width: 16px; height: 16px; }
+
+  .sync-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--bg-soft);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+  }
+  .sync-badge[data-level="ok"] { background: var(--success-soft); color: var(--success); }
+  .sync-badge[data-level="err"] { background: var(--danger-soft); color: var(--danger); }
+  .sync-badge[data-level="syncing"], .sync-badge[data-level="pending"] { background: var(--warning-soft); color: var(--warning); }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::marker { display: none; }
+  details summary { list-style: none; }
+  details summary::before { content: '▸ '; color: var(--text-dim); }
+  details[open] summary::before { content: '▾ '; }
+
+  .danger-zone {
+    background: var(--danger-soft);
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  }
+  .danger-zone h3 { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 25%, transparent); }
+  .danger-zone .settings-body { padding: 14px 16px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn {
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: transform .1s, background .15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-secondary { background: var(--bg-soft); color: var(--text); border: 1px solid var(--border-soft); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn svg { width: 14px; height: 14px; }
+
+  /* Bottom nav */
+  nav.bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-soft);
+    padding: 8px 0 calc(8px + var(--safe-bottom));
+    display: flex;
+    z-index: 60;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  nav.bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    transition: color .15s;
+  }
+  nav.bottom-nav button.active { color: var(--primary); }
+  nav.bottom-nav svg { width: 22px; height: 22px; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 16px;
+    animation: fade .15s;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: pop .2s ease;
+  }
+  @keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h2 {
+    margin: 0;
+    padding: 16px 18px;
+    font-size: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal h2 button.close {
+    color: var(--text-muted);
+    padding: 4px; border-radius: 8px;
+  }
+  .modal-body { padding: 16px 18px; }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--primary);
+    background: var(--bg-elevated);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .color-swatches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .color-swatches button {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid transparent;
+    transition: transform .12s;
+  }
+  .color-swatches button.selected { border-color: var(--text); transform: scale(1.1); }
+  .color-swatches button:hover { transform: scale(1.08); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: calc(90px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: all .25s;
+    display: flex; align-items: center; gap: 8px;
+    max-width: calc(100vw - 32px);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast .undo {
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .toast .undo:hover { background: rgba(255,255,255,0.1); }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    pointer-events: none;
+    z-index: 150;
+    width: 8px; height: 14px;
+    opacity: 0;
+  }
+
+  /* Filters */
+  .filter-row {
+    display: flex; gap: 8px; align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .filter-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .filter-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .filter-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Date input */
+  .date-input {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
+
+  @media (max-width: 480px) {
+    .stat-card .sc-value { font-size: 22px; }
+    .hero-card .info .total { font-size: 30px; }
+    .activity-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .activity-btn { padding: 12px 10px; min-height: 80px; }
+    .activity-btn .a-name { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="app-title"><span class="star">⭐</span><span id="header-title">Family Rewards</span></div>
+  <div class="header-actions">
+    <button class="icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- LOG TAB -->
+  <section class="tab active" id="tab-log">
+    <div class="person-row" id="person-row"></div>
+    <div class="hero-card" id="hero-card">
+      <div class="big-emoji" id="hero-emoji">⭐</div>
+      <div class="info">
+        <div class="label" id="hero-label">Total points</div>
+        <div class="total" id="hero-total">0</div>
+        <div class="today" id="hero-today">+0 today · +0 this week</div>
+      </div>
+    </div>
+
+    <div class="section-title">Log activity <span class="right" id="log-hint">Tap any activity →</span></div>
+    <div id="activity-list"></div>
+
+    <div class="section-title">Recent <span class="right"><button class="filter-pill" id="show-all-recent">Show all</button></span></div>
+    <div id="recent-list"></div>
+  </section>
+
+  <!-- DASHBOARD TAB -->
+  <section class="tab" id="tab-dashboard">
+    <div class="filter-row">
+      <div class="seg" id="period-seg">
+        <button data-period="day" class="active">Today</button>
+        <button data-period="week">Week</button>
+        <button data-period="month">Month</button>
+        <button data-period="all">All</button>
+      </div>
+    </div>
+    <div class="filter-row" id="person-filter"></div>
+
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="chart-card">
+      <div class="chart-title">Total points by person <span class="sub" id="chart-period-label">All time</span></div>
+      <div class="chart-wrap"><canvas id="chart-by-person"></canvas></div>
+    </div>
+
+    <div class="chart-row two">
+      <div class="chart-card">
+        <div class="chart-title">Daily trend <span class="sub">Last 14 days</span></div>
+        <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">By category <span class="sub" id="cat-period-label">All time</span></div>
+        <div class="chart-wrap"><canvas id="chart-category"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Weekly progress <span class="sub">Last 8 weeks</span></div>
+      <div class="chart-wrap tall"><canvas id="chart-weekly"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly progress <span class="sub">Last 6 months</span></div>
+      <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Top activities <span class="sub" id="top-period-label">All time</span></div>
+      <div id="top-activities"></div>
+    </div>
+  </section>
+
+  <!-- REWARDS TAB -->
+  <section class="tab" id="tab-rewards">
+    <div class="person-row" id="rewards-person-row"></div>
+    <div class="hero-card" id="rewards-hero-card">
+      <div class="big-emoji" id="rewards-hero-emoji">🎁</div>
+      <div class="info">
+        <div class="label" id="rewards-hero-label">Balance to spend</div>
+        <div class="total" id="rewards-hero-total">0</div>
+        <div class="today" id="rewards-hero-sub">Earned 0 · Spent 0 (all time)</div>
+      </div>
+    </div>
+
+    <div class="section-title">Available rewards <span class="right">Tap to redeem →</span></div>
+    <div id="rewards-grid"></div>
+
+    <div class="section-title">Recent redemptions <span class="right"><button class="filter-pill" id="show-all-redemptions">Show all</button></span></div>
+    <div id="redemptions-list"></div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section class="tab" id="tab-settings">
+    <div class="settings-card">
+      <h3>People <button class="add" data-action="add-person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
+      <div class="settings-body" id="people-list"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Categories <button class="add" data-action="add-category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
+      <div class="settings-body" id="categories-list"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Activities <button class="add" data-action="add-activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
+      <div class="settings-body" id="activities-list"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Reward categories <button class="add" data-action="add-reward-category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
+      <div class="settings-body" id="reward-categories-list"></div>
+      <div style="padding: 4px 16px 14px;">
+        <p style="margin: 0; font-size: 11px; color: var(--text-dim);">Weight is a cost multiplier. Below 1 = encouraged (cheaper). Above 1 = discouraged (more expensive). e.g. Materials at ×1.5 means a 100-pt toy actually costs 150 pts to redeem.</p>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Rewards <button class="add" data-action="add-reward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
+      <div class="settings-body" id="rewards-settings-list"></div>
+      <div style="padding: 4px 16px 14px;">
+        <button class="btn btn-secondary" id="btn-reset-rewards" style="font-size: 12px;">↻ Load 20 suggested rewards</button>
+        <p style="margin: 8px 0 0; font-size: 11px; color: var(--text-dim);">Replaces your current reward list with the suggested defaults (bonding · social · creativity · experiences). Your past redemptions stay intact.</p>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Data</h3>
+      <div class="settings-body" style="padding: 14px 16px;">
+        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Move data between devices: export the JSON file, save it to iCloud/Google Drive/Dropbox, then import on the other device.</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-export">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export JSON
+          </button>
+          <button class="btn btn-secondary" id="btn-import">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            Import JSON
+          </button>
+          <input type="file" id="file-import" accept=".json,application/json" hidden>
+        </div>
+        <p style="margin: 12px 0 0; font-size: 12px; color: var(--text-dim);" id="last-saved"></p>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Cloud sync (Google Sheets) <span id="sync-badge" class="sync-badge" style="display:none"></span></h3>
+      <div class="settings-body" style="padding: 14px 16px;">
+        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Auto-saves every change to a private Google Sheet you own. Free, works on phone + desktop. Leave the URL blank to stay offline (data lives only in this browser).</p>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Apps Script Web App URL</label>
+          <input id="sync-url" type="url" placeholder="https://script.google.com/macros/s/AKfyc.../exec" autocomplete="off">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-sync-save">Save & test</button>
+          <button class="btn btn-secondary" id="btn-sync-pull">Pull from cloud</button>
+          <button class="btn btn-secondary" id="btn-sync-push">Push to cloud</button>
+        </div>
+        <p id="sync-status-text" style="margin: 10px 0 0; font-size: 12px; color: var(--text-dim);"></p>
+        <details style="margin-top: 14px;">
+          <summary style="cursor:pointer; font-size: 13px; font-weight: 600; color: var(--primary);">First-time setup instructions (5 minutes)</summary>
+          <ol style="font-size: 13px; color: var(--text-muted); padding-left: 18px; line-height: 1.55;">
+            <li>Open <a href="https://sheets.new" target="_blank" rel="noopener" style="color: var(--primary)">sheets.new</a> — this creates a new blank Google Sheet.</li>
+            <li>In the menu: <strong>Extensions → Apps Script</strong>.</li>
+            <li>Delete whatever code is there and paste the script below.</li>
+            <li>Click the 💾 save icon. Name the project anything (e.g. "Family Rewards Sync").</li>
+            <li>Click <strong>Deploy → New deployment</strong>. Click the ⚙ gear → <strong>Web app</strong>.</li>
+            <li>Set "Execute as" = <strong>Me</strong>, "Who has access" = <strong>Anyone</strong>, then <strong>Deploy</strong>.</li>
+            <li>First time only: click <strong>Authorize access</strong>, pick your Google account. You'll see a "Google hasn't verified" warning — click <strong>Advanced → Go to … (unsafe)</strong> → <strong>Allow</strong>. (It's your own script accessing your own sheet — safe.)</li>
+            <li>Copy the <strong>Web app URL</strong>. Paste it into the field above and click <strong>Save &amp; test</strong>.</li>
+            <li>On any other device, open this same HTML file, paste the same URL, and click <strong>Pull from cloud</strong>.</li>
+          </ol>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 12px 0 6px;">Apps Script to paste (copy the whole block):</p>
+          <pre id="apps-script-code" style="background: var(--bg-soft); padding: 12px; border-radius: 10px; font-size: 11px; overflow-x: auto; line-height: 1.45; margin: 0;"></pre>
+          <button class="btn btn-secondary" id="btn-copy-script" style="margin-top: 8px; font-size: 12px;">Copy script</button>
+        </details>
+      </div>
+    </div>
+
+    <div class="settings-card danger-zone">
+      <h3>Danger zone</h3>
+      <div class="settings-body">
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-clear-records">Clear all log entries</button>
+          <button class="btn btn-danger" id="btn-reset-all">Reset everything</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; color: var(--text-dim); font-size: 11px; padding: 12px 0 28px;">
+      Family Reward System · self-contained · your data lives in this browser
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav">
+  <button data-tab="log" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Log</span>
+  </button>
+  <button data-tab="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button data-tab="rewards">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+    <span>Rewards</span>
+  </button>
+  <button data-tab="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2><span id="modal-title">Edit</span><button class="close" id="modal-close">✕</button></h2>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><span class="undo" id="toast-undo" style="display:none">Undo</span></div>
+
+<script>
+/* ============================================================
+   Family Reward System — single-file app
+   Data: localStorage, JSON export/import for cross-device sync
+   ============================================================ */
+
+const STORAGE_KEY = 'familyRewards.v1';
+const PERSON_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#06b6d4','#8b5cf6','#ef4444','#14b8a6'];
+const PERSON_EMOJIS = ['🦊','🐼','🦁','🐨','🐻','🐯','🦄','🐧','🦉','🐢'];
+const CATEGORY_COLORS = ['#06b6d4','#8b5cf6','#10b981','#f59e0b','#ec4899','#ef4444','#0ea5e9','#84cc16'];
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+function defaultRewardCategories() {
+  // Weight is a multiplier on each reward's baseCost. <1 encourages (cheaper);
+  // >1 discourages (more expensive). Default values nudge toward bonding/social/skills
+  // and price-discriminate against materialism.
+  return [
+    { id: 'rc-bonding',     name: 'Bonding & rituals',   weight: 0.8, color: '#ec4899' },
+    { id: 'rc-social',      name: 'Social & friendships',weight: 0.9, color: '#f59e0b' },
+    { id: 'rc-skills',      name: 'Skills & creativity', weight: 0.9, color: '#8b5cf6' },
+    { id: 'rc-experiences', name: 'Experiences',         weight: 1.0, color: '#06b6d4' },
+    { id: 'rc-privileges',  name: 'Privileges',          weight: 1.0, color: '#10b981' },
+    { id: 'rc-materials',   name: 'Materials',           weight: 1.5, color: '#ef4444' },
+  ];
+}
+
+function defaultRewards() {
+  // 20 rewards focused on bonding, EQ, social skills, creativity, and experiences —
+  // not on stuff. The `cost` field is the BASE cost; the actual cost paid at redemption
+  // is base × category.weight (see rewardCost()). Categories are stable string IDs so
+  // they survive migration cleanly.
+  const RC = { bonding:'rc-bonding', social:'rc-social', skills:'rc-skills', experiences:'rc-experiences', privileges:'rc-privileges', materials:'rc-materials' };
+  return [
+    // Bonding & family rituals
+    { id: uid(), name: 'Extra bedtime story',         cost: 15,  emoji: '📖', color: '#8b5cf6', categoryId: RC.bonding },
+    { id: uid(), name: 'Hot chocolate & cosy chat',   cost: 20,  emoji: '☕', color: '#f59e0b', categoryId: RC.bonding },
+    { id: uid(), name: 'Family game night',           cost: 40,  emoji: '🎲', color: '#ec4899', categoryId: RC.bonding },
+    { id: uid(), name: 'Stargazing night',            cost: 60,  emoji: '✨', color: '#8b5cf6', categoryId: RC.bonding },
+    { id: uid(), name: 'Family picnic outing',        cost: 80,  emoji: '🧺', color: '#10b981', categoryId: RC.bonding },
+    // Social & friendships
+    { id: uid(), name: 'Drawing/craft with a friend', cost: 80,  emoji: '🎨', color: '#ec4899', categoryId: RC.social },
+    { id: uid(), name: 'Friend over for playdate',    cost: 100, emoji: '🤝', color: '#14b8a6', categoryId: RC.social },
+    { id: uid(), name: 'Bowling with a friend',       cost: 150, emoji: '🎳', color: '#ef4444', categoryId: RC.social },
+    { id: uid(), name: 'Movie outing with a friend',  cost: 180, emoji: '🍿', color: '#ec4899', categoryId: RC.social },
+    // Skills & creativity
+    { id: uid(), name: 'Library visit',               cost: 30,  emoji: '📚', color: '#0ea5e9', categoryId: RC.skills },
+    { id: uid(), name: 'Cook a meal with parent',     cost: 50,  emoji: '🧑‍🍳', color: '#ef4444', categoryId: RC.skills },
+    { id: uid(), name: 'Karaoke night at home',       cost: 100, emoji: '🎤', color: '#f59e0b', categoryId: RC.skills },
+    { id: uid(), name: 'A new book of your choice',   cost: 100, emoji: '📕', color: '#6366f1', categoryId: RC.skills },
+    { id: uid(), name: 'Sports class trial',          cost: 150, emoji: '⚽', color: '#10b981', categoryId: RC.skills },
+    { id: uid(), name: 'Art / music class trial',     cost: 300, emoji: '🎻', color: '#8b5cf6', categoryId: RC.skills },
+    // Privileges
+    { id: uid(), name: 'Pick the family movie',       cost: 30,  emoji: '🎬', color: '#6366f1', categoryId: RC.privileges },
+    { id: uid(), name: 'Stay up 30 min late',         cost: 50,  emoji: '🌙', color: '#06b6d4', categoryId: RC.privileges },
+    // Experiences
+    { id: uid(), name: 'Museum or science centre',    cost: 200, emoji: '🏛️', color: '#0ea5e9', categoryId: RC.experiences },
+    { id: uid(), name: 'Aquarium visit',              cost: 300, emoji: '🐠', color: '#06b6d4', categoryId: RC.experiences },
+    { id: uid(), name: 'Zoo or safari park day',      cost: 500, emoji: '🦒', color: '#f59e0b', categoryId: RC.experiences },
+  ];
+}
+
+function defaultData() {
+  const catH = uid(), catL = uid(), catC = uid(), catK = uid(), catS = uid(), catB = uid();
+  return {
+    version: 3,
+    settings: { theme: 'auto', activePersonId: null, lastSaved: null, syncUrl: '', lastSyncedAt: null },
+    people: [
+      { id: uid(), name: 'Child 1', color: PERSON_COLORS[0], emoji: PERSON_EMOJIS[0] },
+      { id: uid(), name: 'Child 2', color: PERSON_COLORS[1], emoji: PERSON_EMOJIS[1] },
+    ],
+    categories: [
+      { id: catH, name: 'Hygiene',  weight: 1,   color: '#06b6d4' },
+      { id: catL, name: 'Learning', weight: 2,   color: '#8b5cf6' },
+      { id: catC, name: 'Chores',   weight: 1.5, color: '#10b981' },
+      { id: catK, name: 'Kindness', weight: 2,   color: '#f59e0b' },
+      { id: catS, name: 'Self-care',weight: 1,   color: '#ec4899' },
+      { id: catB, name: 'Bonus',    weight: 3,   color: '#ef4444' },
+    ],
+    activities: [
+      // Hygiene
+      { id: uid(), name: 'Brush teeth',           categoryId: catH, basePoints: 3,  emoji: '🪥' },
+      { id: uid(), name: 'Bath / shower',         categoryId: catH, basePoints: 5,  emoji: '🛁' },
+      { id: uid(), name: 'Wash hands before meal',categoryId: catH, basePoints: 2,  emoji: '🧼' },
+      { id: uid(), name: 'Get ready on time',     categoryId: catH, basePoints: 5,  emoji: '🎒' },
+      // Learning
+      { id: uid(), name: 'Complete homework',     categoryId: catL, basePoints: 10, emoji: '📝' },
+      { id: uid(), name: 'Read for 20 min',       categoryId: catL, basePoints: 8,  emoji: '📚' },
+      { id: uid(), name: 'Practice instrument',   categoryId: catL, basePoints: 10, emoji: '🎹' },
+      { id: uid(), name: 'Extra study',           categoryId: catL, basePoints: 12, emoji: '🧠' },
+      // Chores
+      { id: uid(), name: 'Make bed',              categoryId: catC, basePoints: 5,  emoji: '🛏️' },
+      { id: uid(), name: 'Tidy room',             categoryId: catC, basePoints: 8,  emoji: '🧹' },
+      { id: uid(), name: 'Help with dishes',      categoryId: catC, basePoints: 8,  emoji: '🍽️' },
+      { id: uid(), name: 'Help cook dinner',      categoryId: catC, basePoints: 10, emoji: '🍳' },
+      { id: uid(), name: 'Set / clear table',     categoryId: catC, basePoints: 5,  emoji: '🍴' },
+      // Kindness
+      { id: uid(), name: 'Share with sibling',    categoryId: catK, basePoints: 8,  emoji: '🤝' },
+      { id: uid(), name: 'Help family member',    categoryId: catK, basePoints: 8,  emoji: '💞' },
+      { id: uid(), name: 'Use kind words',        categoryId: catK, basePoints: 3,  emoji: '💬' },
+      { id: uid(), name: 'No tantrums today',     categoryId: catK, basePoints: 10, emoji: '😌' },
+      // Self-care
+      { id: uid(), name: 'Eat veggies',           categoryId: catS, basePoints: 5,  emoji: '🥦' },
+      { id: uid(), name: 'Try new food',          categoryId: catS, basePoints: 5,  emoji: '🍱' },
+      { id: uid(), name: 'Drink water',           categoryId: catS, basePoints: 2,  emoji: '💧' },
+      { id: uid(), name: 'Bedtime on time',       categoryId: catS, basePoints: 8,  emoji: '😴' },
+      // Bonus
+      { id: uid(), name: 'Helped without asking', categoryId: catB, basePoints: 10, emoji: '🌟' },
+      { id: uid(), name: 'Great role model',      categoryId: catB, basePoints: 10, emoji: '🏆' },
+    ],
+    rewardCategories: defaultRewardCategories(),
+    rewards: defaultRewards(),
+    records: [],
+  };
+}
+
+/* Migrate older schema versions in-place */
+function migrate(data) {
+  if (!data || typeof data !== 'object') return defaultData();
+  if (!data.version) return defaultData();
+  if (data.version < 2) {
+    // v1 → v2: every existing record is an "earn"; rewards array didn't exist
+    data.records = (data.records || []).map(r => r.kind ? r : Object.assign({}, r, { kind: 'earn' }));
+    if (!Array.isArray(data.rewards) || data.rewards.length === 0) data.rewards = defaultRewards();
+    data.version = 2;
+  }
+  if (data.version < 3) {
+    // v2 → v3: introduce rewardCategories with weights. Existing rewards have no categoryId;
+    // leave them undefined → rewardCost() treats undefined category as weight 1 (no behavior change).
+    if (!Array.isArray(data.rewardCategories) || data.rewardCategories.length === 0) {
+      data.rewardCategories = defaultRewardCategories();
+    }
+    data.version = 3;
+  }
+  // Always guarantee these arrays exist after migration
+  if (!Array.isArray(data.rewards)) data.rewards = [];
+  if (!Array.isArray(data.rewardCategories)) data.rewardCategories = defaultRewardCategories();
+  if (!Array.isArray(data.records)) data.records = [];
+  return data;
+}
+
+/* ---------- Storage ---------- */
+let state;
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    if (!parsed.version) return defaultData();
+    return migrate(parsed);
+  } catch (e) {
+    console.warn('load failed', e);
+    return defaultData();
+  }
+}
+function save() {
+  state.settings.lastSaved = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  queuePush();
+}
+function saveLocal() {
+  // Persist without triggering a cloud push (used after pulling)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ---------- Utilities ---------- */
+function todayKey(d = new Date()) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function startOfWeek(d) {
+  const x = new Date(d); x.setHours(0,0,0,0);
+  const day = x.getDay(); // 0 = Sun
+  const diff = day === 0 ? -6 : 1 - day; // ISO week starts Monday
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+function startOfMonth(d) { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(1); return x; }
+function formatRelTime(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'yesterday';
+  if (d < 7) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+function categoryOf(activityId) {
+  const a = state.activities.find(x => x.id === activityId);
+  if (!a) return null;
+  return state.categories.find(c => c.id === a.categoryId);
+}
+function activityPoints(activity) {
+  const cat = state.categories.find(c => c.id === activity.categoryId);
+  return Math.round(activity.basePoints * (cat ? cat.weight : 1));
+}
+function rewardCategoryOf(reward) {
+  if (!reward || !reward.categoryId || !Array.isArray(state.rewardCategories)) return null;
+  return state.rewardCategories.find(c => c.id === reward.categoryId) || null;
+}
+function rewardCost(reward) {
+  // Actual cost a kid pays: base cost × category weight (or ×1 if uncategorized).
+  if (!reward) return 0;
+  const cat = rewardCategoryOf(reward);
+  return Math.round((reward.cost || 0) * (cat ? cat.weight : 1));
+}
+function personById(id) { return state.people.find(p => p.id === id); }
+
+/* ---------- Theme ---------- */
+function applyTheme() {
+  const t = state.settings.theme;
+  const isDark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-icon').innerHTML = isDark
+    ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+    : '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>';
+  if (chartsInitted) renderCharts();
+}
+
+/* ---------- UI: Person row & Hero ---------- */
+function activePerson() {
+  let p = state.people.find(x => x.id === state.settings.activePersonId);
+  if (!p) p = state.people[0];
+  if (p) state.settings.activePersonId = p.id;
+  return p;
+}
+function renderPersonRow() {
+  const row = document.getElementById('person-row');
+  row.innerHTML = '';
+  state.people.forEach(p => {
+    const total = totalForPerson(p.id, 'all');
+    const chip = document.createElement('button');
+    chip.className = 'person-chip' + (p.id === state.settings.activePersonId ? ' active' : '');
+    chip.style.setProperty('--person-color', p.color);
+    chip.style.setProperty('--person-soft', hexAlpha(p.color, 0.15));
+    chip.innerHTML = `<span class="avatar">${p.emoji || '⭐'}</span><span class="name">${escapeHtml(p.name)}</span><span class="pts">${total} pts</span>`;
+    chip.onclick = () => { state.settings.activePersonId = p.id; save(); renderLog(); };
+    row.appendChild(chip);
+  });
+  if (state.people.length === 0) {
+    row.innerHTML = '<div class="empty-state" style="width:100%"><div class="ico">👨‍👩‍👧</div>Add a person in Settings to get started</div>';
+  }
+}
+function renderHero() {
+  const p = activePerson();
+  const card = document.getElementById('hero-card');
+  if (!p) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'flex';
+  card.style.setProperty('--person-color', p.color);
+  document.getElementById('hero-emoji').textContent = p.emoji || '⭐';
+  document.getElementById('hero-label').textContent = `${p.name}'s total`;
+  document.getElementById('hero-total').textContent = totalForPerson(p.id, 'all').toLocaleString();
+  const todayPts = totalForPerson(p.id, 'day');
+  const weekPts = totalForPerson(p.id, 'week');
+  document.getElementById('hero-today').textContent = `+${todayPts} today · +${weekPts} this week`;
+}
+
+/* ---------- Activity grid ---------- */
+function renderActivityList() {
+  const cont = document.getElementById('activity-list');
+  cont.innerHTML = '';
+  if (state.activities.length === 0) {
+    cont.innerHTML = '<div class="empty-state"><div class="ico">📋</div>No activities yet. Add some in Settings.</div>';
+    return;
+  }
+  state.categories.forEach(cat => {
+    const acts = state.activities.filter(a => a.categoryId === cat.id);
+    if (acts.length === 0) return;
+    const block = document.createElement('div');
+    block.className = 'category-block';
+    block.innerHTML = `
+      <div class="category-header">
+        <span class="category-dot" style="background:${cat.color}"></span>
+        <span class="category-name">${escapeHtml(cat.name)}</span>
+        <span class="category-weight">×${cat.weight}</span>
+      </div>
+      <div class="activity-grid"></div>`;
+    const grid = block.querySelector('.activity-grid');
+    acts.forEach(a => {
+      const pts = activityPoints(a);
+      const btn = document.createElement('button');
+      btn.className = 'activity-btn';
+      btn.style.setProperty('--cat-color', cat.color);
+      btn.innerHTML = `
+        <div class="row-top">
+          <span class="a-emoji">${a.emoji || '✨'}</span>
+          <span class="a-pts">+${pts}</span>
+        </div>
+        <div class="a-name">${escapeHtml(a.name)}</div>`;
+      btn.onclick = () => logActivity(a, btn);
+      grid.appendChild(btn);
+    });
+    cont.appendChild(block);
+  });
+}
+
+/* ---------- Logging ---------- */
+let recentLimit = 8;
+function logActivity(activity, btn) {
+  const p = activePerson();
+  if (!p) { toast('Pick a person first'); return; }
+  const pts = activityPoints(activity);
+  const rec = {
+    id: uid(),
+    personId: p.id,
+    activityId: activity.id,
+    timestamp: Date.now(),
+    dateISO: todayKey(),
+    points: pts,
+    kind: 'earn',
+  };
+  state.records.push(rec);
+  save();
+  renderPersonRow();
+  renderHero();
+  renderRecent();
+  if (btn) {
+    btn.classList.remove('flash');
+    void btn.offsetWidth;
+    btn.classList.add('flash');
+  }
+  burstConfetti();
+  toast(`+${pts} for ${p.name} · ${activity.name}`, {
+    undo: () => { state.records = state.records.filter(r => r.id !== rec.id); save(); renderPersonRow(); renderHero(); renderRecent(); toast('Removed'); }
+  });
+}
+
+function renderRecent() {
+  const cont = document.getElementById('recent-list');
+  cont.innerHTML = '';
+  const records = [...state.records].sort((a,b) => b.timestamp - a.timestamp).slice(0, recentLimit);
+  if (records.length === 0) {
+    cont.innerHTML = '<div class="recent-list"><div class="empty-state"><div class="ico">🎯</div>No activity yet — tap an activity above to log the first one.</div></div>';
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'recent-list';
+  records.forEach(r => {
+    const p = personById(r.personId);
+    const isRed = isRedeem(r);
+    const a = isRed ? null : state.activities.find(x => x.id === r.activityId);
+    const reward = isRed ? state.rewards.find(x => x.id === r.rewardId) : null;
+    const cat = a ? state.categories.find(c => c.id === a.categoryId) : null;
+    const name = isRed
+      ? (reward ? reward.name : 'Removed reward')
+      : (a ? a.name : 'Removed activity');
+    const meta = isRed
+      ? `${p ? escapeHtml(p.name) : 'Unknown'} · Redeemed · ${formatRelTime(r.timestamp)}`
+      : `${p ? escapeHtml(p.name) : 'Unknown'} · ${cat ? escapeHtml(cat.name) : ''} · ${formatRelTime(r.timestamp)}`;
+    const row = document.createElement('div');
+    row.className = 'recent-row';
+    row.innerHTML = `
+      <span class="rr-avatar" style="background:${p ? p.color : '#999'}">${p ? (p.emoji||'⭐') : '?'}</span>
+      <div class="rr-main">
+        <div class="rr-name">${escapeHtml(name)}</div>
+        <div class="rr-meta">${meta}</div>
+      </div>
+      <span class="rr-pts" ${isRed ? 'style="color:var(--danger);background:var(--danger-soft)"' : ''}>${isRed ? '−' : '+'}${r.points}</span>
+      <button class="del" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></svg></button>`;
+    row.querySelector('.del').onclick = () => {
+      if (confirm(isRed ? 'Remove this redemption? Points will be returned.' : 'Remove this entry?')) {
+        state.records = state.records.filter(x => x.id !== r.id);
+        save();
+        renderAll();
+      }
+    };
+    list.appendChild(row);
+  });
+  cont.appendChild(list);
+}
+document.getElementById('show-all-recent').onclick = (e) => {
+  recentLimit = recentLimit > 50 ? 8 : 100;
+  e.target.textContent = recentLimit > 50 ? 'Show less' : 'Show all';
+  renderRecent();
+};
+
+/* ---------- Totals & filters ---------- */
+function isEarn(r)   { return r.kind !== 'redeem'; }   // default to earn for legacy records
+function isRedeem(r) { return r.kind === 'redeem'; }
+
+function earnedForPerson(personId, period) {
+  const cutoff = periodCutoff(period);
+  return state.records
+    .filter(r => r.personId === personId && r.timestamp >= cutoff && isEarn(r))
+    .reduce((s, r) => s + r.points, 0);
+}
+function redeemedForPerson(personId, period) {
+  const cutoff = periodCutoff(period);
+  return state.records
+    .filter(r => r.personId === personId && r.timestamp >= cutoff && isRedeem(r))
+    .reduce((s, r) => s + r.points, 0);
+}
+function balanceForPerson(personId) {
+  return earnedForPerson(personId, 'all') - redeemedForPerson(personId, 'all');
+}
+
+// Backwards-compatible: 'all' returns net balance (earned − redeemed);
+// shorter periods return earnings in that period (matches the "+X today/week" framing).
+function totalForPerson(personId, period) {
+  if (period === 'all') return balanceForPerson(personId);
+  return earnedForPerson(personId, period);
+}
+function periodCutoff(period) {
+  const now = new Date();
+  if (period === 'day') { const d = new Date(now); d.setHours(0,0,0,0); return d.getTime(); }
+  if (period === 'week') return startOfWeek(now).getTime();
+  if (period === 'month') return startOfMonth(now).getTime();
+  return 0;
+}
+function periodLabel(period) {
+  return period === 'day' ? 'Today' : period === 'week' ? 'This week' : period === 'month' ? 'This month' : 'All time';
+}
+
+/* ---------- Rewards tab ---------- */
+let redemptionsLimit = 8;
+
+function renderRewardsTab() {
+  renderRewardsPersonRow();
+  renderRewardsHero();
+  renderRewardsGrid();
+  renderRedemptionsList();
+}
+
+function renderRewardsPersonRow() {
+  const row = document.getElementById('rewards-person-row');
+  row.innerHTML = '';
+  state.people.forEach(p => {
+    const bal = balanceForPerson(p.id);
+    const chip = document.createElement('button');
+    chip.className = 'person-chip' + (p.id === state.settings.activePersonId ? ' active' : '');
+    chip.style.setProperty('--person-color', p.color);
+    chip.style.setProperty('--person-soft', hexAlpha(p.color, 0.15));
+    chip.innerHTML = `<span class="avatar">${p.emoji || '⭐'}</span><span class="name">${escapeHtml(p.name)}</span><span class="pts">${bal} pts</span>`;
+    chip.onclick = () => { state.settings.activePersonId = p.id; save(); renderRewardsTab(); };
+    row.appendChild(chip);
+  });
+  if (state.people.length === 0) {
+    row.innerHTML = '<div class="empty-state" style="width:100%"><div class="ico">👨‍👩‍👧</div>Add a person in Settings first.</div>';
+  }
+}
+
+function renderRewardsHero() {
+  const p = activePerson();
+  const card = document.getElementById('rewards-hero-card');
+  if (!p) { card.style.display = 'none'; return; }
+  card.style.display = 'flex';
+  card.style.setProperty('--person-color', p.color);
+  document.getElementById('rewards-hero-emoji').textContent = p.emoji || '🎁';
+  document.getElementById('rewards-hero-label').textContent = `${p.name}'s balance`;
+  document.getElementById('rewards-hero-total').textContent = balanceForPerson(p.id).toLocaleString();
+  const earned = earnedForPerson(p.id, 'all');
+  const spent = redeemedForPerson(p.id, 'all');
+  document.getElementById('rewards-hero-sub').textContent = `Earned ${earned} · Spent ${spent} (all time)`;
+}
+
+function renderRewardsGrid() {
+  const cont = document.getElementById('rewards-grid');
+  cont.innerHTML = '';
+  if (!Array.isArray(state.rewards) || state.rewards.length === 0) {
+    cont.innerHTML = '<div class="empty-state"><div class="ico">🎁</div>No rewards yet. Add some in Settings.</div>';
+    return;
+  }
+  const p = activePerson();
+  const balance = p ? balanceForPerson(p.id) : 0;
+
+  // Group rewards by reward-category (categories with no rewards are skipped).
+  // Uncategorized rewards collect into a synthetic "Uncategorized" bucket at the end.
+  const rcats = Array.isArray(state.rewardCategories) ? state.rewardCategories : [];
+  const buckets = rcats.map(c => ({ cat: c, items: state.rewards.filter(r => r.categoryId === c.id) }));
+  const orphans = state.rewards.filter(r => !r.categoryId || !rcats.find(c => c.id === r.categoryId));
+  if (orphans.length) buckets.push({ cat: { id: '__none', name: 'Uncategorized', weight: 1, color: '#94a3b8' }, items: orphans });
+
+  buckets.forEach(({ cat, items }) => {
+    if (items.length === 0) return;
+    const block = document.createElement('div');
+    block.className = 'category-block';
+    block.innerHTML = `
+      <div class="category-header">
+        <span class="category-dot" style="background:${cat.color}"></span>
+        <span class="category-name">${escapeHtml(cat.name)}</span>
+        <span class="category-weight">×${cat.weight}</span>
+      </div>
+      <div class="activity-grid"></div>`;
+    const grid = block.querySelector('.activity-grid');
+    [...items].sort((a,b) => rewardCost(a) - rewardCost(b)).forEach(r => {
+      const actualCost = rewardCost(r);
+      const affordable = p && balance >= actualCost;
+      const btn = document.createElement('button');
+      btn.className = 'activity-btn reward-btn' + (affordable ? '' : ' locked');
+      btn.style.setProperty('--cat-color', cat.color);
+      const shortfall = actualCost - balance;
+      btn.innerHTML = `
+        <div class="row-top">
+          <span class="a-emoji">${r.emoji || '🎁'}</span>
+          <span class="a-pts">−${actualCost}</span>
+        </div>
+        <div class="a-name">${escapeHtml(r.name)}</div>
+        ${!affordable && p ? `<div class="locked-msg">Need ${shortfall} more</div>` : ''}`;
+      btn.onclick = () => redeemReward(r, btn);
+      grid.appendChild(btn);
+    });
+    cont.appendChild(block);
+  });
+}
+
+function redeemReward(reward, btn) {
+  const p = activePerson();
+  if (!p) { toast('Pick a person first'); return; }
+  const balance = balanceForPerson(p.id);
+  const cost = rewardCost(reward);   // base × category weight, frozen on the record below
+  if (balance < cost) {
+    toast(`Not enough points — need ${cost - balance} more`);
+    return;
+  }
+  if (!confirm(`Redeem "${reward.name}" for ${p.name}?\n\nCost: ${cost} points\nBalance after: ${balance - cost} points`)) return;
+  const rec = {
+    id: uid(),
+    personId: p.id,
+    rewardId: reward.id,
+    timestamp: Date.now(),
+    dateISO: todayKey(),
+    points: cost,
+    kind: 'redeem',
+  };
+  state.records.push(rec);
+  save();
+  renderRewardsTab();
+  renderPersonRow();   // Log tab chips update too
+  renderHero();        // Log tab hero balance updates
+  if (btn) {
+    btn.classList.remove('flash');
+    void btn.offsetWidth;
+    btn.classList.add('flash');
+  }
+  toast(`Redeemed ${reward.name} for ${p.name} (−${cost})`, {
+    undo: () => {
+      state.records = state.records.filter(r => r.id !== rec.id);
+      save();
+      renderRewardsTab(); renderPersonRow(); renderHero();
+      toast('Redemption removed');
+    }
+  });
+}
+
+function renderRedemptionsList() {
+  const cont = document.getElementById('redemptions-list');
+  cont.innerHTML = '';
+  const recs = state.records.filter(isRedeem).sort((a,b) => b.timestamp - a.timestamp).slice(0, redemptionsLimit);
+  if (recs.length === 0) {
+    cont.innerHTML = '<div class="recent-list"><div class="empty-state"><div class="ico">💎</div>No redemptions yet — tap a reward above to spend points.</div></div>';
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'recent-list';
+  recs.forEach(r => {
+    const p = personById(r.personId);
+    const reward = state.rewards.find(x => x.id === r.rewardId);
+    const row = document.createElement('div');
+    row.className = 'recent-row';
+    row.innerHTML = `
+      <span class="rr-avatar" style="background:${p ? p.color : '#999'}">${p ? (p.emoji||'⭐') : '?'}</span>
+      <div class="rr-main">
+        <div class="rr-name">${reward ? escapeHtml(reward.name) : 'Removed reward'}</div>
+        <div class="rr-meta">${p ? escapeHtml(p.name) : 'Unknown'} · ${formatRelTime(r.timestamp)}</div>
+      </div>
+      <span class="rr-pts" style="color:var(--danger);background:var(--danger-soft)">−${r.points}</span>
+      <button class="del" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></svg></button>`;
+    row.querySelector('.del').onclick = () => {
+      if (confirm('Remove this redemption? Points will be returned to the balance.')) {
+        state.records = state.records.filter(x => x.id !== r.id);
+        save();
+        renderRewardsTab(); renderPersonRow(); renderHero();
+      }
+    };
+    list.appendChild(row);
+  });
+  cont.appendChild(list);
+}
+
+document.getElementById('show-all-redemptions').onclick = (e) => {
+  redemptionsLimit = redemptionsLimit > 50 ? 8 : 100;
+  e.target.textContent = redemptionsLimit > 50 ? 'Show less' : 'Show all';
+  renderRedemptionsList();
+};
+
+/* ---------- Dashboard ---------- */
+let chartsInitted = false;
+let dashState = { period: 'all', personFilter: 'all' };
+const charts = {};
+
+function renderDashboard() {
+  renderPersonFilter();
+  renderStatsGrid();
+  renderTopActivities();
+  renderCharts();
+  document.getElementById('chart-period-label').textContent = periodLabel(dashState.period);
+  document.getElementById('cat-period-label').textContent = periodLabel(dashState.period);
+  document.getElementById('top-period-label').textContent = periodLabel(dashState.period);
+}
+
+function renderPersonFilter() {
+  const cont = document.getElementById('person-filter');
+  cont.innerHTML = '';
+  const all = document.createElement('button');
+  all.className = 'filter-pill' + (dashState.personFilter === 'all' ? ' active' : '');
+  all.innerHTML = '<span class="dot" style="background:#9ca3af"></span>All people';
+  all.onclick = () => { dashState.personFilter = 'all'; renderDashboard(); };
+  cont.appendChild(all);
+  state.people.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'filter-pill' + (dashState.personFilter === p.id ? ' active' : '');
+    b.innerHTML = `<span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}`;
+    b.onclick = () => { dashState.personFilter = p.id; renderDashboard(); };
+    cont.appendChild(b);
+  });
+}
+
+function filteredRecords() {
+  const cutoff = periodCutoff(dashState.period);
+  return state.records.filter(r => {
+    if (r.timestamp < cutoff) return false;
+    if (dashState.personFilter !== 'all' && r.personId !== dashState.personFilter) return false;
+    return true;
+  });
+}
+function filteredEarnRecords() {
+  return filteredRecords().filter(isEarn);
+}
+
+function renderStatsGrid() {
+  const matches = r => dashState.personFilter === 'all' || r.personId === dashState.personFilter;
+  const earnedAll  = state.records.filter(r => isEarn(r)  && matches(r)).reduce((s,r)=>s+r.points,0);
+  const spentAll   = state.records.filter(r => isRedeem(r) && matches(r)).reduce((s,r)=>s+r.points,0);
+  const cutoff     = periodCutoff(dashState.period);
+  const earnedIn   = state.records.filter(r => isEarn(r)  && r.timestamp >= cutoff && matches(r)).reduce((s,r)=>s+r.points,0);
+  const spentIn    = state.records.filter(r => isRedeem(r) && r.timestamp >= cutoff && matches(r)).reduce((s,r)=>s+r.points,0);
+  const todayPts   = state.records.filter(r => isEarn(r)  && r.dateISO === todayKey() && matches(r)).reduce((s,r)=>s+r.points,0);
+  const weekPts    = state.records.filter(r => isEarn(r)  && r.timestamp >= startOfWeek(new Date()).getTime() && matches(r)).reduce((s,r)=>s+r.points,0);
+  const streak     = computeStreak(dashState.personFilter);
+  const balance    = earnedAll - spentAll;
+
+  // Headline: balance when viewing all-time, otherwise earnings in the period
+  const mainValue = dashState.period === 'all' ? balance : earnedIn;
+  const mainLabel = dashState.period === 'all' ? '⭐ Balance · all time' : `⭐ Earned · ${periodLabel(dashState.period).toLowerCase()}`;
+  const mainSub   = dashState.period === 'all'
+    ? `${earnedAll.toLocaleString()} earned · ${spentAll.toLocaleString()} spent`
+    : (spentIn > 0 ? `${spentIn} spent in this period` : `${state.records.filter(r => isEarn(r) && r.timestamp >= cutoff && matches(r)).length} entries`);
+
+  const cont = document.getElementById('stats-grid');
+  cont.innerHTML = `
+    <div class="stat-card">
+      <div class="sc-label">${mainLabel}</div>
+      <div class="sc-value">${mainValue.toLocaleString()}</div>
+      <div class="sc-sub">${mainSub}</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">📅 Today</div>
+      <div class="sc-value">${todayPts}</div>
+      <div class="sc-sub">points earned today</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">🗓️ This week</div>
+      <div class="sc-value">${weekPts}</div>
+      <div class="sc-sub">since Monday</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">🔥 Day streak</div>
+      <div class="sc-value">${streak}</div>
+      <div class="sc-sub">consecutive earning days</div>
+    </div>`;
+}
+
+function computeStreak(personFilter) {
+  const has = new Set(state.records
+    .filter(r => isEarn(r) && (personFilter === 'all' || r.personId === personFilter))
+    .map(r => r.dateISO));
+  let streak = 0;
+  let d = new Date();
+  d.setHours(0,0,0,0);
+  while (has.has(todayKey(d))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function renderTopActivities() {
+  const recs = filteredEarnRecords();
+  const counts = {};
+  recs.forEach(r => {
+    counts[r.activityId] = counts[r.activityId] || { count: 0, points: 0 };
+    counts[r.activityId].count++;
+    counts[r.activityId].points += r.points;
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1].points - a[1].points).slice(0, 6);
+  const cont = document.getElementById('top-activities');
+  if (sorted.length === 0) {
+    cont.innerHTML = '<div class="empty-state" style="padding:20px"><div class="ico">📊</div>No activities logged in this period yet.</div>';
+    return;
+  }
+  cont.innerHTML = '';
+  sorted.forEach(([actId, info]) => {
+    const a = state.activities.find(x => x.id === actId);
+    const cat = a ? state.categories.find(c => c.id === a.categoryId) : null;
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <span class="lr-dot" style="background:${cat ? cat.color : '#999'}">${a ? (a.emoji||'•') : '?'}</span>
+      <span class="lr-name">${a ? escapeHtml(a.name) : 'Removed'}</span>
+      <span class="lr-meta">${info.count}× · ${info.points} pts</span>`;
+    cont.appendChild(row);
+  });
+}
+
+/* ---------- Charts ---------- */
+function chartTextColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#64748b';
+}
+function chartGridColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue('--border-soft').trim() || '#eef0f4';
+}
+
+function destroyChart(name) {
+  if (charts[name]) { charts[name].destroy(); delete charts[name]; }
+}
+
+function renderCharts() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.color = chartTextColor();
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  Chart.defaults.font.size = 12;
+
+  renderChartByPerson();
+  renderChartDaily();
+  renderChartCategory();
+  renderChartWeekly();
+  renderChartMonthly();
+  chartsInitted = true;
+}
+
+function renderChartByPerson() {
+  destroyChart('byPerson');
+  const ctx = document.getElementById('chart-by-person');
+  if (!ctx) return;
+  const labels = state.people.map(p => p.name);
+  // All-time view = balance (earned − redeemed). Shorter periods = earnings in that period.
+  const data = state.people.map(p =>
+    dashState.period === 'all' ? balanceForPerson(p.id) : earnedForPerson(p.id, dashState.period)
+  );
+  const colors = state.people.map(p => p.color);
+  charts.byPerson = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 8, borderSkipped: false }] },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      indexAxis: state.people.length > 4 ? 'y' : 'x',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed[state.people.length > 4 ? 'x' : 'y']} pts` } } },
+      scales: {
+        x: { grid: { color: chartGridColor() }, ticks: { color: chartTextColor() } },
+        y: { grid: { color: chartGridColor() }, ticks: { color: chartTextColor() }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderChartDaily() {
+  destroyChart('daily');
+  const ctx = document.getElementById('chart-daily');
+  if (!ctx) return;
+  const days = 14;
+  const labels = [];
+  const dataByPerson = {};
+  state.people.forEach(p => dataByPerson[p.id] = []);
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const key = todayKey(d);
+    labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    state.people.forEach(p => {
+      const sum = state.records.filter(r => r.dateISO === key && r.personId === p.id && isEarn(r)).reduce((s,r) => s + r.points, 0);
+      dataByPerson[p.id].push(sum);
+    });
+  }
+  const datasets = state.people
+    .filter(p => dashState.personFilter === 'all' || p.id === dashState.personFilter)
+    .map(p => ({
+      label: p.name,
+      data: dataByPerson[p.id],
+      backgroundColor: p.color,
+      borderColor: p.color,
+      borderRadius: 6,
+      borderSkipped: false,
+    }));
+  charts.daily = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      maintainAspectRatio: false, responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: chartTextColor(), maxRotation: 0, autoSkip: true } },
+        y: { stacked: true, grid: { color: chartGridColor() }, ticks: { color: chartTextColor() }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderChartCategory() {
+  destroyChart('category');
+  const ctx = document.getElementById('chart-category');
+  if (!ctx) return;
+  const recs = filteredRecords();
+  const byCat = {};
+  recs.forEach(r => {
+    const a = state.activities.find(x => x.id === r.activityId);
+    if (!a) return;
+    byCat[a.categoryId] = (byCat[a.categoryId] || 0) + r.points;
+  });
+  const cats = state.categories.filter(c => byCat[c.id] > 0);
+  const labels = cats.map(c => c.name);
+  const data = cats.map(c => byCat[c.id]);
+  const colors = cats.map(c => c.color);
+  if (data.length === 0) {
+    const c = ctx.getContext('2d');
+    c.clearRect(0, 0, ctx.width, ctx.height);
+    c.fillStyle = chartTextColor();
+    c.textAlign = 'center';
+    c.font = '13px sans-serif';
+    c.fillText('No data yet', ctx.width/2, ctx.height/2);
+    return;
+  }
+  charts.category = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-elevated').trim() }] },
+    options: {
+      maintainAspectRatio: false, responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } },
+        tooltip: { callbacks: { label: c => `${c.label}: ${c.parsed} pts` } }
+      }
+    }
+  });
+}
+
+function renderChartWeekly() {
+  destroyChart('weekly');
+  const ctx = document.getElementById('chart-weekly');
+  if (!ctx) return;
+  const weeks = 8;
+  const labels = [];
+  const dataByPerson = {};
+  state.people.forEach(p => dataByPerson[p.id] = []);
+  const now = startOfWeek(new Date());
+  for (let i = weeks - 1; i >= 0; i--) {
+    const wStart = new Date(now); wStart.setDate(wStart.getDate() - 7*i);
+    const wEnd = new Date(wStart); wEnd.setDate(wEnd.getDate() + 7);
+    labels.push(wStart.toLocaleDateString(undefined, { month:'short', day:'numeric' }));
+    state.people.forEach(p => {
+      const sum = state.records.filter(r => r.personId === p.id && isEarn(r) && r.timestamp >= wStart.getTime() && r.timestamp < wEnd.getTime()).reduce((s,r)=>s+r.points,0);
+      dataByPerson[p.id].push(sum);
+    });
+  }
+  const datasets = state.people
+    .filter(p => dashState.personFilter === 'all' || p.id === dashState.personFilter)
+    .map(p => ({
+      label: p.name,
+      data: dataByPerson[p.id],
+      borderColor: p.color,
+      backgroundColor: hexAlpha(p.color, 0.18),
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: p.color,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2.5,
+    }));
+  charts.weekly = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      maintainAspectRatio: false, responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: chartTextColor() } },
+        y: { grid: { color: chartGridColor() }, ticks: { color: chartTextColor() }, beginAtZero: true }
+      },
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+}
+
+function renderChartMonthly() {
+  destroyChart('monthly');
+  const ctx = document.getElementById('chart-monthly');
+  if (!ctx) return;
+  const months = 6;
+  const labels = [];
+  const dataByPerson = {};
+  state.people.forEach(p => dataByPerson[p.id] = []);
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const m = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    labels.push(m.toLocaleDateString(undefined, { month:'short', year:'2-digit' }));
+    state.people.forEach(p => {
+      const sum = state.records.filter(r => r.personId === p.id && isEarn(r) && r.timestamp >= m.getTime() && r.timestamp < mEnd.getTime()).reduce((s,r)=>s+r.points,0);
+      dataByPerson[p.id].push(sum);
+    });
+  }
+  const datasets = state.people
+    .filter(p => dashState.personFilter === 'all' || p.id === dashState.personFilter)
+    .map(p => ({
+      label: p.name,
+      data: dataByPerson[p.id],
+      backgroundColor: p.color,
+      borderRadius: 6,
+      borderSkipped: false,
+    }));
+  charts.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      maintainAspectRatio: false, responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: chartTextColor() } },
+        y: { grid: { color: chartGridColor() }, ticks: { color: chartTextColor() }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+/* ---------- Cloud sync (Google Sheets via Apps Script) ---------- */
+let syncTimer = null;
+let isSyncing = false;
+
+function setSyncStatus(level, msg) {
+  const badge = document.getElementById('sync-badge');
+  const text = document.getElementById('sync-status-text');
+  if (badge) {
+    badge.dataset.level = level || '';
+    badge.textContent = msg || '';
+    badge.style.display = msg ? 'inline-flex' : 'none';
+  }
+  if (text) {
+    const last = state.settings.lastSyncedAt;
+    text.textContent = last
+      ? `Last synced: ${new Date(last).toLocaleString()}`
+      : 'Not yet synced.';
+  }
+}
+
+function queuePush() {
+  if (!state.settings.syncUrl) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  setSyncStatus('pending', '· pending');
+  syncTimer = setTimeout(pushToCloud, 1500);
+}
+
+async function pushToCloud(opts = {}) {
+  const url = state.settings.syncUrl;
+  if (!url) return;
+  if (isSyncing && !opts.force) return;
+  isSyncing = true;
+  setSyncStatus('syncing', '· syncing…');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(state),
+      headers: { 'Content-Type': 'text/plain' },
+      redirect: 'follow',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.ok) throw new Error(data.error || 'Push failed');
+    state.settings.lastSyncedAt = new Date().toISOString();
+    saveLocal();
+    setSyncStatus('ok', '✓ synced');
+    setTimeout(() => setSyncStatus('', ''), 2500);
+  } catch (err) {
+    setSyncStatus('err', '! sync failed');
+    if (opts.alertOnFail) alert('Sync failed: ' + err.message + '\n\nCheck the Apps Script URL and that the deployment is set to "Anyone".');
+  } finally {
+    isSyncing = false;
+  }
+}
+
+async function pullFromCloud(opts = {}) {
+  const url = state.settings.syncUrl;
+  if (!url) return;
+  setSyncStatus('syncing', '· pulling…');
+  try {
+    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    const remoteRaw = await res.json();
+    if (!remoteRaw || !remoteRaw.version) {
+      setSyncStatus('ok', '· cloud empty');
+      // Cloud has nothing yet — push our local data up
+      if (state.records.length > 0 || state.people.length > 0) await pushToCloud({ force: true });
+      return;
+    }
+    // CRITICAL: migrate remote payloads before adopting them, so older v1 cloud data
+    // (with no `rewards` array, no `kind` on records) is upgraded in-flight.
+    const remote = migrate(remoteRaw);
+    const localTs = state.settings.lastSaved ? Date.parse(state.settings.lastSaved) : 0;
+    const remoteTs = remote.settings && remote.settings.lastSaved ? Date.parse(remote.settings.lastSaved) : 0;
+    if (!opts.force && localTs > remoteTs) {
+      // Local is newer; push instead of overwriting
+      await pushToCloud({ force: true });
+      return;
+    }
+    if (opts.confirmBeforeReplace) {
+      const ok = confirm(`Replace local data with cloud data?\n\nLocal: ${state.records.length} entries, last saved ${state.settings.lastSaved || 'never'}\nCloud: ${remote.records.length} entries, last saved ${remote.settings.lastSaved || 'unknown'}`);
+      if (!ok) { setSyncStatus('', ''); return; }
+    }
+    state = remote;
+    state.settings.lastSyncedAt = new Date().toISOString();
+    saveLocal();
+    renderAll();
+    setSyncStatus('ok', '✓ pulled');
+    setTimeout(() => setSyncStatus('', ''), 2500);
+  } catch (err) {
+    setSyncStatus('err', '! pull failed');
+    if (opts.alertOnFail) alert('Pull failed: ' + err.message + '\n\nCheck the Apps Script URL is correct and deployed with access "Anyone".');
+  }
+}
+
+function renderSyncCard() {
+  const urlInput = document.getElementById('sync-url');
+  if (urlInput) urlInput.value = state.settings.syncUrl || '';
+  setSyncStatus(state.settings.lastSyncedAt ? 'ok' : '', '');
+}
+
+/* ---------- Settings: People, Categories, Activities ---------- */
+function renderSettings() {
+  renderPeopleList();
+  renderCategoriesList();
+  renderActivitiesList();
+  renderRewardCategoriesList();
+  renderRewardsSettingsList();
+  renderSyncCard();
+  document.getElementById('last-saved').textContent = state.settings.lastSaved
+    ? 'Last saved: ' + new Date(state.settings.lastSaved).toLocaleString()
+    : '';
+}
+
+function renderPeopleList() {
+  const cont = document.getElementById('people-list');
+  cont.innerHTML = '';
+  if (state.people.length === 0) {
+    cont.innerHTML = '<div class="empty-state" style="padding:20px"><div class="ico">👤</div>No people yet. Tap Add.</div>';
+    return;
+  }
+  state.people.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <span class="lr-dot" style="background:${p.color}">${p.emoji || '⭐'}</span>
+      <span class="lr-name">${escapeHtml(p.name)}</span>
+      <span class="lr-actions">
+        <button class="edit" title="Edit">${iconEdit()}</button>
+        <button class="del" title="Delete">${iconTrash()}</button>
+      </span>`;
+    row.querySelector('.edit').onclick = () => openPersonModal(p);
+    row.querySelector('.del').onclick = () => {
+      if (state.people.length === 1) { alert('At least one person is required.'); return; }
+      if (confirm(`Delete ${p.name}? This will also remove their log entries.`)) {
+        state.records = state.records.filter(r => r.personId !== p.id);
+        state.people = state.people.filter(x => x.id !== p.id);
+        if (state.settings.activePersonId === p.id) state.settings.activePersonId = state.people[0]?.id || null;
+        save(); renderAll();
+      }
+    };
+    cont.appendChild(row);
+  });
+}
+
+function renderCategoriesList() {
+  const cont = document.getElementById('categories-list');
+  cont.innerHTML = '';
+  state.categories.forEach(c => {
+    const count = state.activities.filter(a => a.categoryId === c.id).length;
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <span class="lr-dot" style="background:${c.color}">${c.weight}×</span>
+      <span class="lr-name">${escapeHtml(c.name)}</span>
+      <span class="lr-meta">${count} activities</span>
+      <span class="lr-actions">
+        <button class="edit" title="Edit">${iconEdit()}</button>
+        <button class="del" title="Delete">${iconTrash()}</button>
+      </span>`;
+    row.querySelector('.edit').onclick = () => openCategoryModal(c);
+    row.querySelector('.del').onclick = () => {
+      if (count > 0) { alert(`Move or delete the ${count} activity(ies) in this category first.`); return; }
+      if (confirm(`Delete category "${c.name}"?`)) {
+        state.categories = state.categories.filter(x => x.id !== c.id);
+        save(); renderAll();
+      }
+    };
+    cont.appendChild(row);
+  });
+}
+
+function renderActivitiesList() {
+  const cont = document.getElementById('activities-list');
+  cont.innerHTML = '';
+  state.categories.forEach(cat => {
+    const acts = state.activities.filter(a => a.categoryId === cat.id);
+    if (acts.length === 0) return;
+    const header = document.createElement('div');
+    header.style.cssText = 'padding: 10px 16px 4px; font-size:11px; font-weight:600; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:6px;';
+    header.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${cat.color}"></span>${escapeHtml(cat.name)} <span style="color:var(--text-dim);font-weight:500">×${cat.weight}</span>`;
+    cont.appendChild(header);
+    acts.forEach(a => {
+      const pts = activityPoints(a);
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `
+        <span class="lr-dot" style="background:${cat.color}">${a.emoji || '•'}</span>
+        <span class="lr-name">${escapeHtml(a.name)}</span>
+        <span class="lr-meta">${a.basePoints} × ${cat.weight} = <strong>${pts}</strong></span>
+        <span class="lr-actions">
+          <button class="edit" title="Edit">${iconEdit()}</button>
+          <button class="del" title="Delete">${iconTrash()}</button>
+        </span>`;
+      row.querySelector('.edit').onclick = () => openActivityModal(a);
+      row.querySelector('.del').onclick = () => {
+        if (confirm(`Delete activity "${a.name}"? (Past log entries will keep their points but show "Removed activity".)`)) {
+          state.activities = state.activities.filter(x => x.id !== a.id);
+          save(); renderAll();
+        }
+      };
+      cont.appendChild(row);
+    });
+  });
+  // Activities with no category (orphans)
+  const orphans = state.activities.filter(a => !state.categories.find(c => c.id === a.categoryId));
+  if (orphans.length > 0) {
+    const header = document.createElement('div');
+    header.style.cssText = 'padding: 10px 16px 4px; font-size:11px; font-weight:600; color: var(--text-muted); text-transform:uppercase;';
+    header.textContent = 'Uncategorized';
+    cont.appendChild(header);
+    orphans.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `
+        <span class="lr-dot" style="background:#999">${a.emoji || '•'}</span>
+        <span class="lr-name">${escapeHtml(a.name)}</span>
+        <span class="lr-meta">${a.basePoints} pts</span>
+        <span class="lr-actions"><button class="edit">${iconEdit()}</button><button class="del">${iconTrash()}</button></span>`;
+      row.querySelector('.edit').onclick = () => openActivityModal(a);
+      row.querySelector('.del').onclick = () => {
+        state.activities = state.activities.filter(x => x.id !== a.id); save(); renderAll();
+      };
+      cont.appendChild(row);
+    });
+  }
+}
+
+function renderRewardCategoriesList() {
+  const cont = document.getElementById('reward-categories-list');
+  cont.innerHTML = '';
+  const rcats = Array.isArray(state.rewardCategories) ? state.rewardCategories : [];
+  if (rcats.length === 0) {
+    cont.innerHTML = '<div class="empty-state" style="padding:20px"><div class="ico">🏷️</div>No reward categories yet. Tap Add.</div>';
+    return;
+  }
+  rcats.forEach(c => {
+    const count = state.rewards.filter(r => r.categoryId === c.id).length;
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <span class="lr-dot" style="background:${c.color}">${c.weight}×</span>
+      <span class="lr-name">${escapeHtml(c.name)}</span>
+      <span class="lr-meta">${count} reward${count===1?'':'s'}</span>
+      <span class="lr-actions">
+        <button class="edit" title="Edit">${iconEdit()}</button>
+        <button class="del" title="Delete">${iconTrash()}</button>
+      </span>`;
+    row.querySelector('.edit').onclick = () => openRewardCategoryModal(c);
+    row.querySelector('.del').onclick = () => {
+      if (count > 0) { alert(`Move or delete the ${count} reward(s) in this category first.`); return; }
+      if (confirm(`Delete reward category "${c.name}"?`)) {
+        state.rewardCategories = state.rewardCategories.filter(x => x.id !== c.id);
+        save(); renderAll();
+      }
+    };
+    cont.appendChild(row);
+  });
+}
+
+function renderRewardsSettingsList() {
+  const cont = document.getElementById('rewards-settings-list');
+  cont.innerHTML = '';
+  if (!state.rewards || state.rewards.length === 0) {
+    cont.innerHTML = '<div class="empty-state" style="padding:20px"><div class="ico">🎁</div>No rewards yet. Tap Add.</div>';
+    return;
+  }
+  const rcats = Array.isArray(state.rewardCategories) ? state.rewardCategories : [];
+  const renderGroup = (cat, items) => {
+    if (items.length === 0) return;
+    const header = document.createElement('div');
+    header.style.cssText = 'padding: 10px 16px 4px; font-size:11px; font-weight:600; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:6px;';
+    header.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${cat.color}"></span>${escapeHtml(cat.name)} <span style="color:var(--text-dim);font-weight:500">×${cat.weight}</span>`;
+    cont.appendChild(header);
+    items.sort((a,b) => rewardCost(a) - rewardCost(b)).forEach(r => {
+      const actual = rewardCost(r);
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `
+        <span class="lr-dot" style="background:${cat.color}">${r.emoji || '🎁'}</span>
+        <span class="lr-name">${escapeHtml(r.name)}</span>
+        <span class="lr-meta">${r.cost} × ${cat.weight} = <strong>${actual}</strong> pts</span>
+        <span class="lr-actions">
+          <button class="edit" title="Edit">${iconEdit()}</button>
+          <button class="del" title="Delete">${iconTrash()}</button>
+        </span>`;
+      row.querySelector('.edit').onclick = () => openRewardModal(r);
+      row.querySelector('.del').onclick = () => {
+        if (confirm(`Delete reward "${r.name}"? (Past redemptions stay; they'll just show "Removed reward".)`)) {
+          state.rewards = state.rewards.filter(x => x.id !== r.id);
+          save(); renderAll();
+        }
+      };
+      cont.appendChild(row);
+    });
+  };
+  rcats.forEach(cat => renderGroup(cat, state.rewards.filter(r => r.categoryId === cat.id)));
+  const orphans = state.rewards.filter(r => !r.categoryId || !rcats.find(c => c.id === r.categoryId));
+  if (orphans.length) renderGroup({ name: 'Uncategorized', weight: 1, color: '#94a3b8' }, orphans);
+}
+
+/* ---------- Modals ---------- */
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalBody = document.getElementById('modal-body');
+const modalSave = document.getElementById('modal-save');
+document.getElementById('modal-close').onclick = closeModal;
+document.getElementById('modal-cancel').onclick = closeModal;
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+function openModal() { modal.classList.add('show'); }
+function closeModal() { modal.classList.remove('show'); }
+
+function openPersonModal(person) {
+  const isNew = !person;
+  const p = person || { id: uid(), name: '', color: PERSON_COLORS[state.people.length % PERSON_COLORS.length], emoji: PERSON_EMOJIS[state.people.length % PERSON_EMOJIS.length] };
+  modalTitle.textContent = isNew ? 'Add person' : 'Edit person';
+  modalBody.innerHTML = `
+    <div class="form-group">
+      <label>Name</label>
+      <input id="f-name" type="text" value="${escapeHtml(p.name)}" placeholder="e.g. Emma">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Emoji</label>
+        <input id="f-emoji" type="text" value="${escapeHtml(p.emoji||'')}" placeholder="🦊" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-swatches" id="f-colors"></div>
+      </div>
+    </div>`;
+  renderSwatches('f-colors', PERSON_COLORS, p.color);
+  modalSave.onclick = () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    p.name = name;
+    p.emoji = document.getElementById('f-emoji').value.trim() || '⭐';
+    p.color = document.getElementById('f-colors').dataset.value;
+    if (isNew) state.people.push(p);
+    if (state.people.length === 1) state.settings.activePersonId = p.id;
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openCategoryModal(category) {
+  const isNew = !category;
+  const c = category || { id: uid(), name: '', weight: 1, color: CATEGORY_COLORS[state.categories.length % CATEGORY_COLORS.length] };
+  modalTitle.textContent = isNew ? 'Add category' : 'Edit category';
+  modalBody.innerHTML = `
+    <div class="form-group">
+      <label>Name</label>
+      <input id="f-name" type="text" value="${escapeHtml(c.name)}" placeholder="e.g. Homework">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Weight (point multiplier)</label>
+        <input id="f-weight" type="number" min="0.1" step="0.1" value="${c.weight}">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-swatches" id="f-colors"></div>
+      </div>
+    </div>
+    <div style="font-size:12px; color: var(--text-muted); background:var(--bg-soft); padding:10px 12px; border-radius:10px;">
+      Weight multiplies activity base points. e.g. activity = 5 pts × weight 2 = 10 pts.
+    </div>`;
+  renderSwatches('f-colors', CATEGORY_COLORS, c.color);
+  modalSave.onclick = () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    c.name = name;
+    c.weight = Math.max(0.1, parseFloat(document.getElementById('f-weight').value) || 1);
+    c.color = document.getElementById('f-colors').dataset.value;
+    if (isNew) state.categories.push(c);
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openActivityModal(activity) {
+  if (state.categories.length === 0) { alert('Add a category first.'); return; }
+  const isNew = !activity;
+  const a = activity || { id: uid(), name: '', categoryId: state.categories[0].id, basePoints: 5, emoji: '⭐' };
+  modalTitle.textContent = isNew ? 'Add activity' : 'Edit activity';
+  const catOptions = state.categories.map(c => `<option value="${c.id}" ${c.id===a.categoryId?'selected':''}>${escapeHtml(c.name)} (×${c.weight})</option>`).join('');
+  modalBody.innerHTML = `
+    <div class="form-group">
+      <label>Activity name</label>
+      <input id="f-name" type="text" value="${escapeHtml(a.name)}" placeholder="e.g. Brush teeth">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Emoji</label>
+        <input id="f-emoji" type="text" value="${escapeHtml(a.emoji||'')}" placeholder="🪥" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>Base points</label>
+        <input id="f-points" type="number" min="0" step="1" value="${a.basePoints}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="f-cat">${catOptions}</select>
+    </div>
+    <div style="font-size:12px; color: var(--text-muted); background:var(--bg-soft); padding:10px 12px; border-radius:10px;" id="preview-pts"></div>`;
+  function updatePreview() {
+    const base = parseFloat(document.getElementById('f-points').value) || 0;
+    const cat = state.categories.find(c => c.id === document.getElementById('f-cat').value);
+    const w = cat ? cat.weight : 1;
+    document.getElementById('preview-pts').textContent = `Awards ${Math.round(base * w)} points per log (${base} × ${w}).`;
+  }
+  document.getElementById('f-points').oninput = updatePreview;
+  document.getElementById('f-cat').onchange = updatePreview;
+  updatePreview();
+  modalSave.onclick = () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    a.name = name;
+    a.emoji = document.getElementById('f-emoji').value.trim() || '⭐';
+    a.basePoints = Math.max(0, parseFloat(document.getElementById('f-points').value) || 0);
+    a.categoryId = document.getElementById('f-cat').value;
+    if (isNew) state.activities.push(a);
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openRewardCategoryModal(category) {
+  const isNew = !category;
+  const c = category || { id: uid(), name: '', weight: 1, color: CATEGORY_COLORS[((state.rewardCategories||[]).length) % CATEGORY_COLORS.length] };
+  modalTitle.textContent = isNew ? 'Add reward category' : 'Edit reward category';
+  modalBody.innerHTML = `
+    <div class="form-group">
+      <label>Name</label>
+      <input id="f-name" type="text" value="${escapeHtml(c.name)}" placeholder="e.g. Materials">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Weight (cost multiplier)</label>
+        <input id="f-weight" type="number" min="0.1" step="0.1" value="${c.weight}">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-swatches" id="f-colors"></div>
+      </div>
+    </div>
+    <div style="font-size:12px; color: var(--text-muted); background:var(--bg-soft); padding:10px 12px; border-radius:10px;">
+      Weight is a multiplier on each reward's base cost. <strong>Below 1</strong> = encouraged (cheaper); <strong>above 1</strong> = discouraged (more expensive). e.g. Materials ×1.5 means a 100-pt reward in this category actually costs 150 pts.
+    </div>`;
+  renderSwatches('f-colors', CATEGORY_COLORS, c.color);
+  modalSave.onclick = () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    c.name = name;
+    c.weight = Math.max(0.1, parseFloat(document.getElementById('f-weight').value) || 1);
+    c.color = document.getElementById('f-colors').dataset.value;
+    if (isNew) {
+      if (!Array.isArray(state.rewardCategories)) state.rewardCategories = [];
+      state.rewardCategories.push(c);
+    }
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openRewardModal(reward) {
+  if (!Array.isArray(state.rewards)) state.rewards = [];
+  if (!Array.isArray(state.rewardCategories) || state.rewardCategories.length === 0) {
+    state.rewardCategories = defaultRewardCategories();
+  }
+  const isNew = !reward;
+  const defaultCat = state.rewardCategories.find(c => c.id === 'rc-experiences') || state.rewardCategories[0];
+  const r = reward || { id: uid(), name: '', emoji: '🎁', cost: 50, color: PERSON_COLORS[state.rewards.length % PERSON_COLORS.length], categoryId: defaultCat.id };
+  modalTitle.textContent = isNew ? 'Add reward' : 'Edit reward';
+  const catOptions = state.rewardCategories.map(c =>
+    `<option value="${c.id}" ${c.id === r.categoryId ? 'selected' : ''}>${escapeHtml(c.name)} (×${c.weight})</option>`
+  ).join('');
+  modalBody.innerHTML = `
+    <div class="form-group">
+      <label>Reward name</label>
+      <input id="f-name" type="text" value="${escapeHtml(r.name)}" placeholder="e.g. Ice cream">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Emoji</label>
+        <input id="f-emoji" type="text" value="${escapeHtml(r.emoji||'')}" placeholder="🍦" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>Base cost</label>
+        <input id="f-cost" type="number" min="0" step="1" value="${r.cost}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="f-rcat">${catOptions}</select>
+    </div>
+    <div class="form-group">
+      <label>Color</label>
+      <div class="color-swatches" id="f-colors"></div>
+    </div>
+    <div id="reward-preview" style="font-size:12px; color: var(--text-muted); background:var(--bg-soft); padding:10px 12px; border-radius:10px;"></div>`;
+  renderSwatches('f-colors', PERSON_COLORS, r.color);
+  function updatePreview() {
+    const base = parseFloat(document.getElementById('f-cost').value) || 0;
+    const catId = document.getElementById('f-rcat').value;
+    const cat = state.rewardCategories.find(c => c.id === catId);
+    const w = cat ? cat.weight : 1;
+    const actual = Math.round(base * w);
+    document.getElementById('reward-preview').innerHTML =
+      `Actual cost: <strong>${actual} pts</strong> (${base} base × ${w} category weight). ` +
+      (w < 1 ? 'Encouraged — cheaper than base.' : w > 1 ? 'Discouraged — more expensive than base.' : 'Normal — no adjustment.');
+  }
+  document.getElementById('f-cost').oninput = updatePreview;
+  document.getElementById('f-rcat').onchange = updatePreview;
+  updatePreview();
+  modalSave.onclick = () => {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    r.name = name;
+    r.emoji = document.getElementById('f-emoji').value.trim() || '🎁';
+    r.cost = Math.max(0, parseInt(document.getElementById('f-cost').value, 10) || 0);
+    r.categoryId = document.getElementById('f-rcat').value;
+    r.color = document.getElementById('f-colors').dataset.value;
+    if (isNew) state.rewards.push(r);
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function renderSwatches(containerId, colors, selected) {
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  cont.dataset.value = selected;
+  colors.forEach(col => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.style.background = col;
+    if (col.toLowerCase() === selected.toLowerCase()) b.classList.add('selected');
+    b.onclick = () => {
+      cont.dataset.value = col;
+      cont.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    };
+    cont.appendChild(b);
+  });
+}
+
+document.querySelectorAll('[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const a = btn.dataset.action;
+    if (a === 'add-person') openPersonModal();
+    if (a === 'add-category') openCategoryModal();
+    if (a === 'add-activity') openActivityModal();
+    if (a === 'add-reward-category') openRewardCategoryModal();
+    if (a === 'add-reward') openRewardModal();
+  });
+});
+
+/* ---------- Export / Import ---------- */
+document.getElementById('btn-export').onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dt = new Date();
+  const stamp = `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}-${String(dt.getHours()).padStart(2,'0')}${String(dt.getMinutes()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `family-rewards-${stamp}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Exported JSON');
+};
+document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
+document.getElementById('file-import').onchange = (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const fr = new FileReader();
+  fr.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.version || !Array.isArray(data.people)) throw new Error('Invalid file');
+      const choice = confirm(`Import ${data.people.length} people, ${data.activities.length} activities, and ${data.records.length} log entries?\n\nOK = REPLACE current data\nCancel = MERGE (add new only)`);
+      if (choice) {
+        state = data;
+      } else {
+        // Merge - add records that don't exist by id, and add new people/activities/categories by id
+        const mergeArray = (existing, incoming) => {
+          const existingIds = new Set(existing.map(x => x.id));
+          incoming.forEach(item => { if (!existingIds.has(item.id)) existing.push(item); });
+        };
+        mergeArray(state.people, data.people);
+        mergeArray(state.categories, data.categories);
+        mergeArray(state.activities, data.activities);
+        mergeArray(state.records, data.records);
+      }
+      save();
+      renderAll();
+      toast('Imported successfully');
+    } catch (err) {
+      alert('Could not import: ' + err.message);
+    }
+  };
+  fr.readAsText(file);
+  e.target.value = '';
+};
+
+/* ---------- Sync UI wiring ---------- */
+const APPS_SCRIPT_CODE = `// Family Rewards sync — paste into Apps Script editor, then deploy as Web app
+// (Extensions → Apps Script, then Deploy → New deployment → Web app, access = Anyone)
+
+const CELL = 'A1';
+
+function doGet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  const v = sheet.getRange(CELL).getValue();
+  return ContentService
+    .createTextOutput(v || '{}')
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    sheet.getRange(CELL).setValue(e.postData.contents);
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, savedAt: new Date().toISOString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+document.getElementById('apps-script-code').textContent = APPS_SCRIPT_CODE;
+document.getElementById('btn-copy-script').onclick = () => {
+  navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(
+    () => toast('Apps Script copied'),
+    () => toast('Copy failed — select manually')
+  );
+};
+document.getElementById('btn-sync-save').onclick = async () => {
+  const url = document.getElementById('sync-url').value.trim();
+
+  // Case 1: User cleared the URL → disable sync (safe, no remote calls)
+  if (!url) {
+    state.settings.syncUrl = '';
+    save();
+    setSyncStatus('', '');
+    toast('Cloud sync disabled');
+    return;
+  }
+
+  // Validate URL format (warn-only — user can override)
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
+    if (!confirm('That URL doesn\'t look like an Apps Script Web App URL (should end in /exec). Save anyway?')) return;
+  }
+
+  // Case 2: Test the URL by fetching cloud state — do NOT save() yet,
+  // because save() would bump lastSaved and trick the merge logic into pushing.
+  setSyncStatus('syncing', '· testing…');
+  let remoteRaw, remote;
+  try {
+    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    remoteRaw = await res.json();
+    // Migrate older schema versions before inspecting / adopting.
+    remote = remoteRaw && remoteRaw.version ? migrate(remoteRaw) : remoteRaw;
+  } catch (err) {
+    setSyncStatus('err', '! connection failed');
+    alert(
+      'Could not connect to that URL.\n\n' +
+      'Error: ' + err.message + '\n\n' +
+      'Check that:\n' +
+      '  • The URL ends in /exec\n' +
+      '  • The deployment is set to "Anyone" can access\n' +
+      '  • You are online'
+    );
+    return;
+  }
+
+  const cloudHasData = remote && remote.version && Array.isArray(remote.records) && remote.records.length > 0;
+  const cloudHasState = remote && remote.version;
+  const localHasData = state.records.length > 0;
+
+  if (cloudHasData && localHasData) {
+    // Conflict: both sides have data → ask user which side wins
+    const choice = confirm(
+      `Both this device AND the cloud have data.\n\n` +
+      `Cloud: ${remote.records.length} entries, last saved ${remote.settings && remote.settings.lastSaved ? new Date(remote.settings.lastSaved).toLocaleString() : 'unknown'}\n` +
+      `Local: ${state.records.length} entries, last saved ${state.settings.lastSaved ? new Date(state.settings.lastSaved).toLocaleString() : 'unknown'}\n\n` +
+      `OK = use CLOUD data on this device (local data discarded)\n` +
+      `Cancel = use LOCAL data and overwrite cloud (cloud data discarded)`
+    );
+    if (choice) {
+      // Adopt cloud
+      state = remote;
+      state.settings.syncUrl = url;
+      state.settings.lastSyncedAt = new Date().toISOString();
+      saveLocal();           // persist locally without triggering a push
+      renderAll();
+      setSyncStatus('ok', '✓ synced');
+      toast('Loaded data from cloud');
+    } else {
+      // Push local
+      state.settings.syncUrl = url;
+      save();                // sets lastSaved + queues a push
+      await pushToCloud({ force: true, alertOnFail: true });
+      toast('Local data pushed to cloud');
+    }
+  } else if (cloudHasState) {
+    // Cloud has structure (and possibly data); local has no records → pull
+    state = remote;
+    state.settings.syncUrl = url;
+    state.settings.lastSyncedAt = new Date().toISOString();
+    saveLocal();
+    renderAll();
+    setSyncStatus('ok', '✓ synced');
+    toast(cloudHasData ? 'Loaded data from cloud' : 'Connected — cloud has no entries yet');
+  } else {
+    // Cloud is empty → push our local state up
+    state.settings.syncUrl = url;
+    save();
+    await pushToCloud({ force: true, alertOnFail: true });
+    toast('Sync configured · local data pushed to cloud');
+  }
+};
+document.getElementById('btn-sync-push').onclick = () => pushToCloud({ force: true, alertOnFail: true }).then(() => toast('Pushed to cloud'));
+document.getElementById('btn-sync-pull').onclick = () => pullFromCloud({ confirmBeforeReplace: true, force: true, alertOnFail: true });
+
+/* ---------- Danger zone ---------- */
+document.getElementById('btn-reset-rewards').onclick = () => {
+  if (confirm('Replace your current rewards with the 20 suggested defaults?\n\nCustom rewards you added will be lost. Past redemptions are kept (they\'ll show "Removed reward" only if you also delete the matching default).')) {
+    state.rewards = defaultRewards();
+    save();
+    renderAll();
+    toast('Rewards reset to 20 suggested defaults');
+  }
+};
+
+document.getElementById('btn-clear-records').onclick = () => {
+  if (confirm('Delete ALL log entries? People and activities will be kept. This cannot be undone.')) {
+    state.records = [];
+    save(); renderAll(); toast('All entries cleared');
+  }
+};
+document.getElementById('btn-reset-all').onclick = () => {
+  if (confirm('Reset everything to defaults? All people, activities, and log entries will be erased. This cannot be undone.')) {
+    state = defaultData(); save(); renderAll(); toast('Reset complete');
+  }
+};
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('nav.bottom-nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav.bottom-nav button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const t = b.dataset.tab;
+    document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + t).classList.add('active');
+    if (t === 'dashboard') renderDashboard();
+    if (t === 'rewards') renderRewardsTab();
+    if (t === 'settings') renderSettings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+});
+
+document.querySelectorAll('#period-seg button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('#period-seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    dashState.period = b.dataset.period;
+    renderDashboard();
+  };
+});
+
+document.getElementById('theme-toggle').onclick = () => {
+  const cur = state.settings.theme;
+  state.settings.theme = cur === 'dark' ? 'light' : 'dark';
+  save(); applyTheme();
+};
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg, opts = {}) {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  const undoEl = document.getElementById('toast-undo');
+  if (opts.undo) {
+    undoEl.style.display = 'inline';
+    undoEl.onclick = () => { opts.undo(); t.classList.remove('show'); };
+  } else {
+    undoEl.style.display = 'none';
+  }
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ---------- Confetti ---------- */
+function burstConfetti() {
+  const colors = ['#fbbf24','#f472b6','#34d399','#60a5fa','#a78bfa','#fb7185'];
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight * 0.35;
+  for (let i = 0; i < 18; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.background = colors[i % colors.length];
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    el.style.borderRadius = (Math.random() > 0.5) ? '50%' : '2px';
+    document.body.appendChild(el);
+    const angle = (Math.PI * 2 * i) / 18 + Math.random() * 0.4;
+    const dist = 80 + Math.random() * 120;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - 40;
+    const rot = (Math.random() - 0.5) * 720;
+    el.animate([
+      { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) rotate(${rot}deg)`, opacity: 0 }
+    ], { duration: 900 + Math.random()*400, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    setTimeout(() => el.remove(), 1400);
+  }
+}
+
+/* ---------- Misc helpers ---------- */
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function hexAlpha(hex, alpha) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function iconEdit() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>'; }
+function iconTrash() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></svg>'; }
+
+/* ---------- Boot ---------- */
+function renderLog() {
+  renderPersonRow();
+  renderHero();
+  renderActivityList();
+  renderRecent();
+}
+function renderAll() {
+  renderLog();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  if (document.getElementById('tab-rewards').classList.contains('active')) renderRewardsTab();
+  if (document.getElementById('tab-settings').classList.contains('active')) renderSettings();
+}
+
+state = load();
+// Migrate old states that don't have new sync fields
+if (state.settings.syncUrl === undefined) state.settings.syncUrl = '';
+if (state.settings.lastSyncedAt === undefined) state.settings.lastSyncedAt = null;
+if (!state.settings.activePersonId && state.people.length) state.settings.activePersonId = state.people[0].id;
+applyTheme();
+renderLog();
+renderSettings();
+
+// Initial cloud pull (silent — last-write-wins resolves which side keeps data)
+if (state.settings.syncUrl) {
+  pullFromCloud().catch(() => {});
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (state.settings.theme === 'auto') applyTheme();
+});
+
+// On window focus: pull from cloud (other device may have edited) + check same-device tab edits
+window.addEventListener('focus', () => {
+  const fresh = load();
+  if (fresh.settings && fresh.settings.lastSaved && state.settings.lastSaved && fresh.settings.lastSaved > state.settings.lastSaved) {
+    state = fresh;
+    renderAll();
+  }
+  if (state.settings.syncUrl) pullFromCloud().catch(() => {});
+});
+</script>
+</body>
+</html>
