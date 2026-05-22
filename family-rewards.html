@@ -76,7 +76,7 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
-    padding-bottom: calc(76px + var(--safe-bottom));
+    padding-bottom: calc(132px + var(--safe-bottom)); /* room for comment bar + bottom nav; refined at runtime by adjustDockPadding() */
   }
   button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
   input, select, textarea { font-family: inherit; font-size: 16px; }
@@ -492,16 +492,53 @@
   .btn svg { width: 14px; height: 14px; }
 
   /* Bottom nav */
-  nav.bottom-nav {
+  /* Fixed dock holds the comment bar + the bottom nav, stacked. */
+  .bottom-dock {
     position: fixed;
     bottom: 0; left: 0; right: 0;
+    z-index: 60;
+    background: var(--bg-elevated);
+  }
+  .comment-bar {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-soft);
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  .comment-pill {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-size: 14px;
+    transition: background .15s, transform .1s;
+  }
+  .comment-pill:hover { background: var(--primary-soft); }
+  .comment-pill:active { transform: scale(0.99); }
+  .comment-pill-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); }
+  .comment-pill-text { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .comment-badge {
+    flex-shrink: 0;
+    min-width: 20px; height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .comment-badge.zero { display: none; }
+
+  nav.bottom-nav {
     background: var(--bg-elevated);
     border-top: 1px solid var(--border-soft);
     padding: 8px 0 calc(8px + var(--safe-bottom));
     display: flex;
-    z-index: 60;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    max-width: 980px;
+    margin: 0 auto;
   }
   nav.bottom-nav button {
     flex: 1;
@@ -517,6 +554,111 @@
   }
   nav.bottom-nav button.active { color: var(--primary); }
   nav.bottom-nav svg { width: 22px; height: 22px; }
+
+  /* Comment drawer */
+  .comment-drawer-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 105;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fade .15s;
+  }
+  .comment-drawer-backdrop.show { display: flex; }
+  .comment-drawer {
+    background: var(--bg-elevated);
+    width: 100%;
+    max-width: 720px;
+    border-radius: 22px 22px 0 0;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp .26s cubic-bezier(.2,.8,.2,1);
+    overflow: hidden;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+  .cd-header { padding: 8px 14px 10px; border-bottom: 1px solid var(--border-soft); flex-shrink: 0; }
+  .cd-grab { width: 38px; height: 4px; border-radius: 999px; background: var(--border); margin: 2px auto 10px; }
+  .cd-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cd-title { font-size: 16px; font-weight: 700; }
+  .cd-header-actions { display: flex; gap: 6px; }
+  .cd-filter { width: fit-content; }
+  .comment-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 16px;
+    min-height: 80px;
+  }
+  .comment-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .comment-item:last-child { border-bottom: none; }
+  .comment-check {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 7px;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+    transition: all .15s;
+    margin-top: 1px;
+  }
+  .comment-check.checked { background: var(--success); border-color: var(--success); color: #fff; }
+  .comment-check svg { width: 14px; height: 14px; }
+  .comment-body { flex: 1; min-width: 0; }
+  .comment-text { font-size: 14.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .comment-item.done .comment-text { text-decoration: line-through; color: var(--text-dim); }
+  .comment-time { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .comment-del {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .comment-del:hover { color: var(--danger); background: var(--danger-soft); }
+  .comment-del svg { width: 16px; height: 16px; }
+  .comment-input-bar {
+    flex-shrink: 0;
+    display: flex; gap: 8px; align-items: flex-end;
+    padding: 10px 12px calc(10px + var(--safe-bottom));
+    border-top: 1px solid var(--border-soft);
+    background: var(--bg-elevated);
+  }
+  .comment-input-bar textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 9px 14px;
+    max-height: 120px;
+    line-height: 1.4;
+    font-size: 15px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .comment-input-bar textarea:focus { border-color: var(--primary); background: var(--bg-elevated); }
+  .comment-send {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .1s, opacity .15s;
+  }
+  .comment-send:active { transform: scale(0.92); }
+  .comment-send:disabled { opacity: 0.4; }
+  .comment-send svg { width: 18px; height: 18px; }
 
   /* Modal */
   .modal-backdrop {
@@ -875,6 +1017,14 @@
   </section>
 </main>
 
+<div class="bottom-dock">
+<div class="comment-bar">
+  <button class="comment-pill" id="comment-pill">
+    <svg class="comment-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span class="comment-pill-text">Add a comment, request or improvement…</span>
+    <span class="comment-badge zero" id="comment-badge">0</span>
+  </button>
+</div>
 <nav class="bottom-nav">
   <button data-tab="log" class="active">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -893,6 +1043,34 @@
     <span>Settings</span>
   </button>
 </nav>
+</div>
+
+<!-- Comment drawer -->
+<div class="comment-drawer-backdrop" id="comment-drawer-backdrop">
+  <div class="comment-drawer" id="comment-drawer">
+    <div class="cd-header">
+      <div class="cd-grab"></div>
+      <div class="cd-header-row">
+        <div class="cd-title"><span id="cd-page-name">Log</span> · comments</div>
+        <div class="cd-header-actions">
+          <button class="icon-btn" id="cd-copy" title="Copy all comments (all pages) as a markdown checklist">⧉</button>
+          <button class="icon-btn" id="cd-close" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="seg cd-filter" id="cd-filter">
+        <button data-cfilter="open" class="active">Open</button>
+        <button data-cfilter="all">All</button>
+      </div>
+    </div>
+    <div class="comment-list" id="comment-list"></div>
+    <div class="comment-input-bar">
+      <textarea id="comment-input" rows="1" placeholder="Add a comment, request or improvement…"></textarea>
+      <button class="comment-send" id="comment-send" title="Post">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="modal-backdrop" id="modal">
@@ -973,7 +1151,7 @@ function defaultRewards() {
 function defaultData() {
   const catH = uid(), catL = uid(), catC = uid(), catK = uid(), catS = uid(), catB = uid();
   return {
-    version: 3,
+    version: 4,
     settings: { theme: 'auto', activePersonId: null, lastSaved: null, syncUrl: '', lastSyncedAt: null },
     people: [
       { id: uid(), name: 'Child 1', color: PERSON_COLORS[0], emoji: PERSON_EMOJIS[0] },
@@ -1021,6 +1199,7 @@ function defaultData() {
     rewardCategories: defaultRewardCategories(),
     rewards: defaultRewards(),
     records: [],
+    comments: [],   // { id, page, text, done, createdAt, completedAt } — in-app feedback backlog per page
   };
 }
 
@@ -1042,10 +1221,16 @@ function migrate(data) {
     }
     data.version = 3;
   }
+  if (data.version < 4) {
+    // v3 → v4: in-app comment/feedback backlog (per page)
+    if (!Array.isArray(data.comments)) data.comments = [];
+    data.version = 4;
+  }
   // Always guarantee these arrays exist after migration
   if (!Array.isArray(data.rewards)) data.rewards = [];
   if (!Array.isArray(data.rewardCategories)) data.rewardCategories = defaultRewardCategories();
   if (!Array.isArray(data.records)) data.records = [];
+  if (!Array.isArray(data.comments)) data.comments = [];
   return data;
 }
 
@@ -2608,6 +2793,8 @@ document.querySelectorAll('nav.bottom-nav button').forEach(b => {
     const t = b.dataset.tab;
     document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
     document.getElementById('tab-' + t).classList.add('active');
+    currentPage = t;
+    renderCommentBar();
     if (t === 'dashboard') renderDashboard();
     if (t === 'rewards') renderRewardsTab();
     if (t === 'settings') renderSettings();
@@ -2685,6 +2872,198 @@ function hexAlpha(hex, alpha) {
 function iconEdit() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>'; }
 function iconTrash() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></svg>'; }
 
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const okk = document.execCommand('copy');
+      document.body.removeChild(ta);
+      okk ? resolve() : reject(new Error('execCommand failed'));
+    } catch (e) { reject(e); }
+  });
+}
+
+/* ---------- Comments / feedback backlog ---------- */
+const PAGE_LABELS = { log: 'Log', dashboard: 'Dashboard', rewards: 'Rewards', settings: 'Settings' };
+const PAGE_ORDER = ['log', 'dashboard', 'rewards', 'settings'];
+let currentPage = 'log';
+let commentFilter = 'open';   // 'open' | 'all'
+
+function commentsForPage(page) {
+  return state.comments.filter(c => c.page === page).sort((a, b) => a.createdAt - b.createdAt);
+}
+function openCommentCount(page) {
+  return state.comments.filter(c => c.page === page && !c.done).length;
+}
+
+function renderCommentBar() {
+  const badge = document.getElementById('comment-badge');
+  if (!badge) return;
+  const n = openCommentCount(currentPage);
+  badge.textContent = n;
+  badge.classList.toggle('zero', n === 0);
+}
+
+function adjustDockPadding() {
+  const dock = document.querySelector('.bottom-dock');
+  if (dock) document.body.style.paddingBottom = dock.offsetHeight + 'px';
+}
+
+function openCommentDrawer() {
+  document.getElementById('cd-page-name').textContent = PAGE_LABELS[currentPage] || currentPage;
+  renderCommentList();
+  document.getElementById('comment-drawer-backdrop').classList.add('show');
+  setTimeout(() => {
+    const list = document.getElementById('comment-list');
+    if (list) list.scrollTop = list.scrollHeight;
+    const input = document.getElementById('comment-input');
+    if (input) input.focus();
+  }, 220);
+}
+function closeCommentDrawer() {
+  document.getElementById('comment-drawer-backdrop').classList.remove('show');
+}
+
+function renderCommentList() {
+  const cont = document.getElementById('comment-list');
+  cont.innerHTML = '';
+  let items = commentsForPage(currentPage);
+  if (commentFilter === 'open') items = items.filter(c => !c.done);
+  if (items.length === 0) {
+    const allForPage = commentsForPage(currentPage).length;
+    const msg = commentFilter === 'open' && allForPage > 0
+      ? 'No open comments — all done here. Switch to “All” to see completed items.'
+      : 'No comments yet for this page. Add a request or improvement below.';
+    cont.innerHTML = `<div class="empty-state"><div class="ico">💬</div>${msg}</div>`;
+    return;
+  }
+  items.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'comment-item' + (c.done ? ' done' : '');
+    const when = c.done && c.completedAt
+      ? `Done ${new Date(c.completedAt).toLocaleDateString([], { month:'short', day:'numeric' })} · added ${formatRelTime(c.createdAt)}`
+      : `Added ${formatRelTime(c.createdAt)}`;
+    item.innerHTML = `
+      <button class="comment-check ${c.done ? 'checked' : ''}" title="${c.done ? 'Mark not done' : 'Mark done'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <div class="comment-body">
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-time">${when}</div>
+      </div>
+      <button class="comment-del" title="Delete">${iconTrash()}</button>`;
+    item.querySelector('.comment-check').onclick = () => toggleComment(c.id);
+    item.querySelector('.comment-del').onclick = () => {
+      if (confirm('Delete this comment?')) deleteComment(c.id);
+    };
+    cont.appendChild(item);
+  });
+}
+
+function postComment() {
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if (!text) return;
+  state.comments.push({
+    id: uid(),
+    page: currentPage,
+    text,
+    done: false,
+    createdAt: Date.now(),
+    completedAt: null,
+  });
+  save();
+  input.value = '';
+  input.style.height = 'auto';
+  commentFilter = 'open';
+  syncFilterButtons();
+  renderCommentList();
+  renderCommentBar();
+  const cont = document.getElementById('comment-list');
+  cont.scrollTop = cont.scrollHeight;
+}
+
+function toggleComment(id) {
+  const c = state.comments.find(x => x.id === id);
+  if (!c) return;
+  c.done = !c.done;
+  c.completedAt = c.done ? Date.now() : null;
+  save();
+  renderCommentList();
+  renderCommentBar();
+}
+
+function deleteComment(id) {
+  state.comments = state.comments.filter(c => c.id !== id);
+  save();
+  renderCommentList();
+  renderCommentBar();
+}
+
+function commentsAsMarkdown() {
+  let md = `# Family Rewards — Comments & Requests\n\n_Exported ${new Date().toLocaleString()}_\n\n`;
+  PAGE_ORDER.forEach(page => {
+    const items = commentsForPage(page);
+    md += `## ${PAGE_LABELS[page]}\n`;
+    if (items.length === 0) { md += `_(none)_\n\n`; return; }
+    items.forEach(c => {
+      const box = c.done ? '[x]' : '[ ]';
+      const done = c.done && c.completedAt ? ` _(done ${new Date(c.completedAt).toLocaleDateString()})_` : '';
+      md += `- ${box} ${c.text.replace(/\n+/g, ' ')}${done}\n`;
+    });
+    md += `\n`;
+  });
+  return md;
+}
+
+function copyAllComments() {
+  const md = commentsAsMarkdown();
+  copyText(md).then(
+    () => toast('All comments copied as markdown checklist'),
+    () => {
+      // Fallback: drop into the input so the user can copy manually
+      const input = document.getElementById('comment-input');
+      if (input) { input.value = md; input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; }
+      toast('Copy blocked — markdown placed in the input box, select & copy');
+    }
+  );
+}
+
+function syncFilterButtons() {
+  document.querySelectorAll('#cd-filter button').forEach(b => {
+    b.classList.toggle('active', b.dataset.cfilter === commentFilter);
+  });
+}
+
+// Wire up comment UI
+document.getElementById('comment-pill').onclick = openCommentDrawer;
+document.getElementById('cd-close').onclick = closeCommentDrawer;
+document.getElementById('cd-copy').onclick = copyAllComments;
+document.getElementById('comment-drawer-backdrop').addEventListener('click', e => {
+  if (e.target === document.getElementById('comment-drawer-backdrop')) closeCommentDrawer();
+});
+document.querySelectorAll('#cd-filter button').forEach(b => {
+  b.onclick = () => { commentFilter = b.dataset.cfilter; syncFilterButtons(); renderCommentList(); };
+});
+(function setupCommentInput() {
+  const input = document.getElementById('comment-input');
+  const send = document.getElementById('comment-send');
+  const autoGrow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; };
+  input.addEventListener('input', autoGrow);
+  send.onclick = postComment;
+  // Desktop convenience: Cmd/Ctrl+Enter posts. Plain Enter inserts a newline (mobile-friendly).
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); postComment(); }
+  });
+})();
+
 /* ---------- Boot ---------- */
 function renderLog() {
   renderPersonRow();
@@ -2697,16 +3076,23 @@ function renderAll() {
   if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
   if (document.getElementById('tab-rewards').classList.contains('active')) renderRewardsTab();
   if (document.getElementById('tab-settings').classList.contains('active')) renderSettings();
+  renderCommentBar();
+  // If the comment drawer is open, keep its list in sync (e.g. after a cloud pull)
+  if (document.getElementById('comment-drawer-backdrop').classList.contains('show')) renderCommentList();
 }
 
 state = load();
 // Migrate old states that don't have new sync fields
 if (state.settings.syncUrl === undefined) state.settings.syncUrl = '';
 if (state.settings.lastSyncedAt === undefined) state.settings.lastSyncedAt = null;
+if (!Array.isArray(state.comments)) state.comments = [];
 if (!state.settings.activePersonId && state.people.length) state.settings.activePersonId = state.people[0].id;
 applyTheme();
 renderLog();
 renderSettings();
+renderCommentBar();
+adjustDockPadding();
+window.addEventListener('resize', adjustDockPadding);
 
 // Initial cloud pull (silent — last-write-wins resolves which side keeps data)
 if (state.settings.syncUrl) {
