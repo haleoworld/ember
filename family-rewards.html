@@ -968,12 +968,16 @@
     </div>
 
     <div class="settings-card">
-      <h3>Cloud sync (Google Sheets) <span id="sync-badge" class="sync-badge" style="display:none"></span></h3>
+      <h3>Cloud sync (GitHub Gist) <span id="sync-badge" class="sync-badge" style="display:none"></span></h3>
       <div class="settings-body" style="padding: 14px 16px;">
-        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Auto-saves every change to a private Google Sheet you own. Free, works on phone + desktop. Leave the URL blank to stay offline (data lives only in this browser).</p>
+        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Auto-saves every change to a private GitHub Gist you own. Every save becomes a versioned revision, so you can roll back to an earlier copy if anything ever goes wrong. Leave the token blank to stay offline (data lives only in this browser).</p>
         <div class="form-group" style="margin-bottom: 10px;">
-          <label>Apps Script Web App URL</label>
-          <input id="sync-url" type="url" placeholder="https://script.google.com/macros/s/AKfyc.../exec" autocomplete="off">
+          <label>GitHub token <span style="color: var(--text-dim); font-weight: 400;">(classic, "gist" scope only)</span></label>
+          <input id="sync-token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Gist ID <span style="color: var(--text-dim); font-weight: 400;">(blank on the first device — one is created for you)</span></label>
+          <input id="sync-gist" type="text" placeholder="leave blank to create a new gist" autocomplete="off" spellcheck="false">
         </div>
         <div class="btn-row">
           <button class="btn btn-primary" id="btn-sync-save">Save & test</button>
@@ -981,22 +985,17 @@
           <button class="btn btn-secondary" id="btn-sync-push">Push to cloud</button>
         </div>
         <p id="sync-status-text" style="margin: 10px 0 0; font-size: 12px; color: var(--text-dim);"></p>
+        <p id="sync-gist-link" style="margin: 6px 0 0; font-size: 12px; color: var(--text-muted);"></p>
         <details style="margin-top: 14px;">
-          <summary style="cursor:pointer; font-size: 13px; font-weight: 600; color: var(--primary);">First-time setup instructions (5 minutes)</summary>
+          <summary style="cursor:pointer; font-size: 13px; font-weight: 600; color: var(--primary);">First-time setup instructions (2 minutes)</summary>
           <ol style="font-size: 13px; color: var(--text-muted); padding-left: 18px; line-height: 1.55;">
-            <li>Open <a href="https://sheets.new" target="_blank" rel="noopener" style="color: var(--primary)">sheets.new</a> — this creates a new blank Google Sheet.</li>
-            <li>In the menu: <strong>Extensions → Apps Script</strong>.</li>
-            <li>Delete whatever code is there and paste the script below.</li>
-            <li>Click the 💾 save icon. Name the project anything (e.g. "Family Rewards Sync").</li>
-            <li>Click <strong>Deploy → New deployment</strong>. Click the ⚙ gear → <strong>Web app</strong>.</li>
-            <li>Set "Execute as" = <strong>Me</strong>, "Who has access" = <strong>Anyone</strong>, then <strong>Deploy</strong>.</li>
-            <li>First time only: click <strong>Authorize access</strong>, pick your Google account. You'll see a "Google hasn't verified" warning — click <strong>Advanced → Go to … (unsafe)</strong> → <strong>Allow</strong>. (It's your own script accessing your own sheet — safe.)</li>
-            <li>Copy the <strong>Web app URL</strong>. Paste it into the field above and click <strong>Save &amp; test</strong>.</li>
-            <li>On any other device, open this same HTML file, paste the same URL, and click <strong>Pull from cloud</strong>.</li>
+            <li>Open <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Family%20Rewards%20sync" target="_blank" rel="noopener" style="color: var(--primary)">github.com/settings/tokens/new</a> (GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)).</li>
+            <li>Under <strong>Select scopes</strong>, tick only <strong><code>gist</code></strong> — nothing else.</li>
+            <li>Pick an expiry (or "No expiration" to avoid redoing this), then <strong>Generate token</strong> and copy it (it starts with <code>ghp_</code>).</li>
+            <li>Paste the token above, leave <strong>Gist ID blank</strong>, and click <strong>Save &amp; test</strong>. The app creates a new private gist and saves your data; its ID appears just above.</li>
+            <li>On any other device: open this same page, paste the <strong>same token</strong> and that <strong>Gist ID</strong>, then click <strong>Pull from cloud</strong>.</li>
           </ol>
-          <p style="font-size: 12px; color: var(--text-muted); margin: 12px 0 6px;">Apps Script to paste (copy the whole block):</p>
-          <pre id="apps-script-code" style="background: var(--bg-soft); padding: 12px; border-radius: 10px; font-size: 11px; overflow-x: auto; line-height: 1.45; margin: 0;"></pre>
-          <button class="btn btn-secondary" id="btn-copy-script" style="margin-top: 8px; font-size: 12px;">Copy script</button>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 12px 0 0; line-height: 1.55;"><strong>Restore an older copy:</strong> open the gist on GitHub, click <strong>Revisions</strong>, choose an earlier save, copy its raw JSON, and paste it into <strong>Settings → Import JSON</strong>. Your token stays in this browser only — it is never written into the gist.</p>
         </details>
       </div>
     </div>
@@ -1151,8 +1150,8 @@ function defaultRewards() {
 function defaultData() {
   const catH = uid(), catL = uid(), catC = uid(), catK = uid(), catS = uid(), catB = uid();
   return {
-    version: 4,
-    settings: { theme: 'auto', activePersonId: null, lastSaved: null, syncUrl: '', lastSyncedAt: null },
+    version: 5,
+    settings: { theme: 'auto', activePersonId: null, lastSaved: null, lastSyncedAt: null, gistId: '', gistToken: '' },
     people: [
       { id: uid(), name: 'Child 1', color: PERSON_COLORS[0], emoji: PERSON_EMOJIS[0] },
       { id: uid(), name: 'Child 2', color: PERSON_COLORS[1], emoji: PERSON_EMOJIS[1] },
@@ -1225,6 +1224,16 @@ function migrate(data) {
     // v3 → v4: in-app comment/feedback backlog (per page)
     if (!Array.isArray(data.comments)) data.comments = [];
     data.version = 4;
+  }
+  if (data.version < 5) {
+    // v4 → v5: sync backend moved from Google Sheets (Apps Script URL) to GitHub Gist.
+    // Drop the old syncUrl; introduce gist credentials (empty = offline until configured).
+    if (data.settings) {
+      delete data.settings.syncUrl;
+      if (typeof data.settings.gistId !== 'string') data.settings.gistId = '';
+      if (typeof data.settings.gistToken !== 'string') data.settings.gistToken = '';
+    }
+    data.version = 5;
   }
   // Always guarantee these arrays exist after migration
   if (!Array.isArray(data.rewards)) data.rewards = [];
@@ -2032,9 +2041,39 @@ function renderChartMonthly() {
   });
 }
 
-/* ---------- Cloud sync (Google Sheets via Apps Script) ---------- */
+/* ---------- Cloud sync (GitHub Gist) ---------- */
+// Every save PATCHes the whole state JSON into one file in a private gist the user owns.
+// GitHub versions every PATCH, so the gist's Revisions tab is a free, restorable backup history.
+const GIST_API = 'https://api.github.com/gists';
+const GIST_FILENAME = 'family-rewards-data.json';
 let syncTimer = null;
 let isSyncing = false;
+
+function gistHeaders(token) {
+  return {
+    'Authorization': 'Bearer ' + token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+}
+
+// Accept either a raw gist id or a full gist URL and return just the id.
+function extractGistId(s) {
+  s = (s || '').trim();
+  if (!s) return '';
+  const hex = s.match(/[0-9a-f]{20,}/i);
+  if (hex) return hex[0];
+  const parts = s.replace(/\/+$/, '').split('/');
+  return parts[parts.length - 1];
+}
+
+// Never write the token (or per-device gist id) into the gist itself — secret gists are
+// still readable by anyone with the link, so credentials must stay on the device only.
+function syncPayload() {
+  const clean = JSON.parse(JSON.stringify(state));
+  if (clean.settings) { clean.settings.gistToken = ''; clean.settings.gistId = ''; }
+  return JSON.stringify(clean);
+}
 
 function setSyncStatus(level, msg) {
   const badge = document.getElementById('sync-badge');
@@ -2053,54 +2092,67 @@ function setSyncStatus(level, msg) {
 }
 
 function queuePush() {
-  if (!state.settings.syncUrl) return;
+  if (!state.settings.gistToken) return;
   if (syncTimer) clearTimeout(syncTimer);
   setSyncStatus('pending', '· pending');
   syncTimer = setTimeout(pushToCloud, 1500);
 }
 
 async function pushToCloud(opts = {}) {
-  const url = state.settings.syncUrl;
-  if (!url) return;
+  const token = state.settings.gistToken;
+  if (!token) return;
   if (isSyncing && !opts.force) return;
   isSyncing = true;
   setSyncStatus('syncing', '· syncing…');
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(state),
-      headers: { 'Content-Type': 'text/plain' },
-      redirect: 'follow',
+    const body = JSON.stringify({
+      description: 'Family Reward System data (auto-managed — do not edit by hand)',
+      public: false,
+      files: { [GIST_FILENAME]: { content: syncPayload() } },
     });
+    const gistId = state.settings.gistId;
+    const res = gistId
+      ? await fetch(GIST_API + '/' + gistId, { method: 'PATCH', headers: Object.assign({ 'Content-Type': 'application/json' }, gistHeaders(token)), body })
+      : await fetch(GIST_API,                { method: 'POST',  headers: Object.assign({ 'Content-Type': 'application/json' }, gistHeaders(token)), body });
+    if (!res.ok) {
+      const detail = res.status === 401 ? ' (bad or expired token)' : res.status === 404 ? ' (gist not found / token lacks the gist scope)' : '';
+      throw new Error('GitHub ' + res.status + detail);
+    }
     const data = await res.json().catch(() => ({}));
-    if (!data.ok) throw new Error(data.error || 'Push failed');
+    if (!gistId && data.id) state.settings.gistId = data.id; // remember the gist we just created
     state.settings.lastSyncedAt = new Date().toISOString();
     saveLocal();
     setSyncStatus('ok', '✓ synced');
     setTimeout(() => setSyncStatus('', ''), 2500);
   } catch (err) {
     setSyncStatus('err', '! sync failed');
-    if (opts.alertOnFail) alert('Sync failed: ' + err.message + '\n\nCheck the Apps Script URL and that the deployment is set to "Anyone".');
+    if (opts.alertOnFail) alert('Sync failed: ' + err.message + '\n\nCheck your GitHub token has the "gist" scope and the Gist ID is correct.');
   } finally {
     isSyncing = false;
   }
 }
 
 async function pullFromCloud(opts = {}) {
-  const url = state.settings.syncUrl;
-  if (!url) return;
+  const token = state.settings.gistToken;
+  const gistId = state.settings.gistId;
+  if (!token || !gistId) return;
   setSyncStatus('syncing', '· pulling…');
   try {
-    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-    const remoteRaw = await res.json();
+    const res = await fetch(GIST_API + '/' + gistId, { method: 'GET', headers: gistHeaders(token) });
+    if (!res.ok) throw new Error('GitHub ' + res.status);
+    const gist = await res.json();
+    const file = gist.files && gist.files[GIST_FILENAME];
+    if (file && file.truncated) throw new Error('Cloud data too large to read inline');
+    let remoteRaw = null;
+    if (file && file.content) { try { remoteRaw = JSON.parse(file.content); } catch (e) { remoteRaw = null; } }
     if (!remoteRaw || !remoteRaw.version) {
       setSyncStatus('ok', '· cloud empty');
-      // Cloud has nothing yet — push our local data up
+      // Gist has nothing usable yet — push our local data up
       if (state.records.length > 0 || state.people.length > 0) await pushToCloud({ force: true });
       return;
     }
-    // CRITICAL: migrate remote payloads before adopting them, so older v1 cloud data
-    // (with no `rewards` array, no `kind` on records) is upgraded in-flight.
+    // CRITICAL: migrate remote payloads before adopting them, so older-schema cloud data
+    // (e.g. no `rewards` array, no `kind` on records) is upgraded in-flight.
     const remote = migrate(remoteRaw);
     const localTs = state.settings.lastSaved ? Date.parse(state.settings.lastSaved) : 0;
     const remoteTs = remote.settings && remote.settings.lastSaved ? Date.parse(remote.settings.lastSaved) : 0;
@@ -2113,7 +2165,11 @@ async function pullFromCloud(opts = {}) {
       const ok = confirm(`Replace local data with cloud data?\n\nLocal: ${state.records.length} entries, last saved ${state.settings.lastSaved || 'never'}\nCloud: ${remote.records.length} entries, last saved ${remote.settings.lastSaved || 'unknown'}`);
       if (!ok) { setSyncStatus('', ''); return; }
     }
+    // Keep THIS device's own credentials — the cloud copy is stripped of them.
+    const myToken = state.settings.gistToken, myGistId = state.settings.gistId;
     state = remote;
+    state.settings.gistToken = myToken;
+    state.settings.gistId = myGistId;
     state.settings.lastSyncedAt = new Date().toISOString();
     saveLocal();
     renderAll();
@@ -2121,13 +2177,21 @@ async function pullFromCloud(opts = {}) {
     setTimeout(() => setSyncStatus('', ''), 2500);
   } catch (err) {
     setSyncStatus('err', '! pull failed');
-    if (opts.alertOnFail) alert('Pull failed: ' + err.message + '\n\nCheck the Apps Script URL is correct and deployed with access "Anyone".');
+    if (opts.alertOnFail) alert('Pull failed: ' + err.message + '\n\nCheck your GitHub token and Gist ID.');
   }
 }
 
 function renderSyncCard() {
-  const urlInput = document.getElementById('sync-url');
-  if (urlInput) urlInput.value = state.settings.syncUrl || '';
+  const tokenInput = document.getElementById('sync-token');
+  const gistInput = document.getElementById('sync-gist');
+  if (tokenInput) tokenInput.value = state.settings.gistToken || '';
+  if (gistInput) gistInput.value = state.settings.gistId || '';
+  const link = document.getElementById('sync-gist-link');
+  if (link) {
+    link.innerHTML = state.settings.gistId
+      ? `Gist ID: <code>${escapeHtml(state.settings.gistId)}</code> · <a href="https://gist.github.com/${escapeHtml(state.settings.gistId)}" target="_blank" rel="noopener" style="color:var(--primary)">open on GitHub</a>`
+      : '';
+  }
   setSyncStatus(state.settings.lastSyncedAt ? 'ok' : '', '');
 }
 
@@ -2641,124 +2705,105 @@ document.getElementById('file-import').onchange = (e) => {
 };
 
 /* ---------- Sync UI wiring ---------- */
-const APPS_SCRIPT_CODE = `// Family Rewards sync — paste into Apps Script editor, then deploy as Web app
-// (Extensions → Apps Script, then Deploy → New deployment → Web app, access = Anyone)
-
-const CELL = 'A1';
-
-function doGet() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  const v = sheet.getRange(CELL).getValue();
-  return ContentService
-    .createTextOutput(v || '{}')
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    sheet.getRange(CELL).setValue(e.postData.contents);
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, savedAt: new Date().toISOString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}`;
-
-document.getElementById('apps-script-code').textContent = APPS_SCRIPT_CODE;
-document.getElementById('btn-copy-script').onclick = () => {
-  navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(
-    () => toast('Apps Script copied'),
-    () => toast('Copy failed — select manually')
-  );
-};
 document.getElementById('btn-sync-save').onclick = async () => {
-  const url = document.getElementById('sync-url').value.trim();
+  const token = document.getElementById('sync-token').value.trim();
+  const gistId = extractGistId(document.getElementById('sync-gist').value);
 
-  // Case 1: User cleared the URL → disable sync (safe, no remote calls)
-  if (!url) {
-    state.settings.syncUrl = '';
+  // Case 1: token cleared → disable sync (no remote calls)
+  if (!token) {
+    state.settings.gistToken = '';
     save();
     setSyncStatus('', '');
     toast('Cloud sync disabled');
+    renderSyncCard();
     return;
   }
 
-  // Validate URL format (warn-only — user can override)
-  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
-    if (!confirm('That URL doesn\'t look like an Apps Script Web App URL (should end in /exec). Save anyway?')) return;
-  }
-
-  // Case 2: Test the URL by fetching cloud state — do NOT save() yet,
-  // because save() would bump lastSaved and trick the merge logic into pushing.
   setSyncStatus('syncing', '· testing…');
-  let remoteRaw, remote;
-  try {
-    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-    remoteRaw = await res.json();
-    // Migrate older schema versions before inspecting / adopting.
-    remote = remoteRaw && remoteRaw.version ? migrate(remoteRaw) : remoteRaw;
-  } catch (err) {
-    setSyncStatus('err', '! connection failed');
-    alert(
-      'Could not connect to that URL.\n\n' +
-      'Error: ' + err.message + '\n\n' +
-      'Check that:\n' +
-      '  • The URL ends in /exec\n' +
-      '  • The deployment is set to "Anyone" can access\n' +
-      '  • You are online'
-    );
-    return;
-  }
 
-  const cloudHasData = remote && remote.version && Array.isArray(remote.records) && remote.records.length > 0;
-  const cloudHasState = remote && remote.version;
-  const localHasData = state.records.length > 0;
+  if (gistId) {
+    // A gist id was supplied → read it WITHOUT save() first, so we don't bump lastSaved
+    // and trick the merge logic into overwriting good cloud data.
+    let remote;
+    try {
+      const res = await fetch(GIST_API + '/' + gistId, { method: 'GET', headers: gistHeaders(token) });
+      if (!res.ok) {
+        const detail = res.status === 401 ? ' (bad or expired token)' : res.status === 404 ? " (gist not found, or the token lacks the gist scope / isn't the owner)" : '';
+        throw new Error('GitHub ' + res.status + detail);
+      }
+      const gist = await res.json();
+      const file = gist.files && gist.files[GIST_FILENAME];
+      let remoteRaw = null;
+      if (file && !file.truncated && file.content) { try { remoteRaw = JSON.parse(file.content); } catch (e) { remoteRaw = null; } }
+      remote = remoteRaw && remoteRaw.version ? migrate(remoteRaw) : remoteRaw;
+    } catch (err) {
+      setSyncStatus('err', '! connection failed');
+      alert('Could not read that Gist.\n\nError: ' + err.message + '\n\nCheck that:\n  • The token has the "gist" scope\n  • The Gist ID is correct and owned by the same GitHub account\n  • You are online');
+      return;
+    }
 
-  if (cloudHasData && localHasData) {
-    // Conflict: both sides have data → ask user which side wins
-    const choice = confirm(
-      `Both this device AND the cloud have data.\n\n` +
-      `Cloud: ${remote.records.length} entries, last saved ${remote.settings && remote.settings.lastSaved ? new Date(remote.settings.lastSaved).toLocaleString() : 'unknown'}\n` +
-      `Local: ${state.records.length} entries, last saved ${state.settings.lastSaved ? new Date(state.settings.lastSaved).toLocaleString() : 'unknown'}\n\n` +
-      `OK = use CLOUD data on this device (local data discarded)\n` +
-      `Cancel = use LOCAL data and overwrite cloud (cloud data discarded)`
-    );
-    if (choice) {
-      // Adopt cloud
+    const cloudHasData = remote && remote.version && Array.isArray(remote.records) && remote.records.length > 0;
+    const cloudHasState = remote && remote.version;
+    const localHasData = state.records.length > 0;
+
+    if (cloudHasData && localHasData) {
+      // Conflict: both sides have data → ask user which side wins
+      const choice = confirm(
+        `Both this device AND the gist have data.\n\n` +
+        `Cloud: ${remote.records.length} entries, last saved ${remote.settings && remote.settings.lastSaved ? new Date(remote.settings.lastSaved).toLocaleString() : 'unknown'}\n` +
+        `Local: ${state.records.length} entries, last saved ${state.settings.lastSaved ? new Date(state.settings.lastSaved).toLocaleString() : 'unknown'}\n\n` +
+        `OK = use CLOUD data on this device (local data discarded)\n` +
+        `Cancel = use LOCAL data and overwrite cloud (cloud data discarded)`
+      );
+      if (choice) {
+        // Adopt cloud (keep this device's own credentials)
+        state = remote;
+        state.settings.gistToken = token;
+        state.settings.gistId = gistId;
+        state.settings.lastSyncedAt = new Date().toISOString();
+        saveLocal();           // persist locally without triggering a push
+        renderAll();
+        setSyncStatus('ok', '✓ synced');
+        toast('Loaded data from cloud');
+      } else {
+        // Push local
+        state.settings.gistToken = token;
+        state.settings.gistId = gistId;
+        save();                // sets lastSaved + queues a push
+        await pushToCloud({ force: true, alertOnFail: true });
+        toast('Local data pushed to cloud');
+      }
+    } else if (cloudHasState) {
+      // Gist has structure (and possibly data); local has no records → pull
       state = remote;
-      state.settings.syncUrl = url;
+      state.settings.gistToken = token;
+      state.settings.gistId = gistId;
       state.settings.lastSyncedAt = new Date().toISOString();
-      saveLocal();           // persist locally without triggering a push
+      saveLocal();
       renderAll();
       setSyncStatus('ok', '✓ synced');
-      toast('Loaded data from cloud');
+      toast(cloudHasData ? 'Loaded data from cloud' : 'Connected — gist has no entries yet');
     } else {
-      // Push local
-      state.settings.syncUrl = url;
-      save();                // sets lastSaved + queues a push
+      // Gist exists but is empty/unreadable → seed it with local data
+      state.settings.gistToken = token;
+      state.settings.gistId = gistId;
+      save();
       await pushToCloud({ force: true, alertOnFail: true });
-      toast('Local data pushed to cloud');
+      toast('Sync configured · local data pushed to cloud');
     }
-  } else if (cloudHasState) {
-    // Cloud has structure (and possibly data); local has no records → pull
-    state = remote;
-    state.settings.syncUrl = url;
-    state.settings.lastSyncedAt = new Date().toISOString();
-    saveLocal();
-    renderAll();
-    setSyncStatus('ok', '✓ synced');
-    toast(cloudHasData ? 'Loaded data from cloud' : 'Connected — cloud has no entries yet');
-  } else {
-    // Cloud is empty → push our local state up
-    state.settings.syncUrl = url;
-    save();
-    await pushToCloud({ force: true, alertOnFail: true });
-    toast('Sync configured · local data pushed to cloud');
+    renderSyncCard();
+    return;
   }
+
+  // No gist id → create a brand-new private gist seeded with this device's data.
+  // Safe to save() here: there is no existing cloud copy to overwrite.
+  state.settings.gistToken = token;
+  state.settings.gistId = '';
+  save();
+  await pushToCloud({ force: true, alertOnFail: true });
+  if (state.settings.gistId) toast('Created a private Gist and saved your data');
+  else toast('Saved token, but gist creation failed — check the token scope');
+  renderSyncCard();
 };
 document.getElementById('btn-sync-push').onclick = () => pushToCloud({ force: true, alertOnFail: true }).then(() => toast('Pushed to cloud'));
 document.getElementById('btn-sync-pull').onclick = () => pullFromCloud({ confirmBeforeReplace: true, force: true, alertOnFail: true });
@@ -3082,8 +3127,9 @@ function renderAll() {
 }
 
 state = load();
-// Migrate old states that don't have new sync fields
-if (state.settings.syncUrl === undefined) state.settings.syncUrl = '';
+// Defensive: ensure sync fields exist (migrate() handles this too, but stay safe for very old states)
+if (typeof state.settings.gistId !== 'string') state.settings.gistId = '';
+if (typeof state.settings.gistToken !== 'string') state.settings.gistToken = '';
 if (state.settings.lastSyncedAt === undefined) state.settings.lastSyncedAt = null;
 if (!Array.isArray(state.comments)) state.comments = [];
 if (!state.settings.activePersonId && state.people.length) state.settings.activePersonId = state.people[0].id;
@@ -3095,7 +3141,7 @@ adjustDockPadding();
 window.addEventListener('resize', adjustDockPadding);
 
 // Initial cloud pull (silent — last-write-wins resolves which side keeps data)
-if (state.settings.syncUrl) {
+if (state.settings.gistToken && state.settings.gistId) {
   pullFromCloud().catch(() => {});
 }
 
@@ -3110,7 +3156,7 @@ window.addEventListener('focus', () => {
     state = fresh;
     renderAll();
   }
-  if (state.settings.syncUrl) pullFromCloud().catch(() => {});
+  if (state.settings.gistToken && state.settings.gistId) pullFromCloud().catch(() => {});
 });
 </script>
 </body>
