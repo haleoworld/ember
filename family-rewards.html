@@ -1863,10 +1863,7 @@ function applyLogView() {
   });
 }
 document.querySelectorAll('#log-sections .seg-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    logView = btn.dataset.logView;
-    applyLogView();
-  });
+  btn.addEventListener('click', () => navigate('log', btn.dataset.logView));
 });
 
 /* ---------- Totals & filters ---------- */
@@ -3477,10 +3474,7 @@ document.querySelectorAll('[data-action]').forEach(btn => {
 });
 
 document.querySelectorAll('#settings-sections .seg-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    settingsSection = btn.dataset.settingsSection;
-    applySettingsSection();
-  });
+  btn.addEventListener('click', () => navigate('settings', btn.dataset.settingsSection));
 });
 
 /* ---------- Export / Import ---------- */
@@ -3697,19 +3691,54 @@ document.getElementById('btn-reset-all').onclick = () => {
 };
 
 /* ---------- Tabs ---------- */
+/* ---------- Router (hash-based: works on GitHub Pages, no server rewrites) ---------- */
+const ROUTE_TABS    = ['log','dashboard','rewards','search','settings'];
+const ROUTE_LOG_SUB = ['recent','good','misbehavior'];
+const ROUTE_SET_SUB = ['people','earn','rewards','behavior','data'];
+
+function applyRoute() {
+  const hash = (location.hash || '').replace(/^#\/?/, '');
+  const [rawTab, rawSub] = hash.split('/');
+  const tab = ROUTE_TABS.includes(rawTab) ? rawTab : 'log';
+
+  // Activate the right tab section + bottom-nav button
+  document.querySelectorAll('nav.bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  currentPage = tab;
+
+  // Sub-section state (only changes the global if the URL specifies a valid sub;
+  // otherwise the previously-active sub stays)
+  if (tab === 'log') {
+    if (rawSub && ROUTE_LOG_SUB.includes(rawSub)) logView = rawSub;
+    applyLogView();
+  } else if (tab === 'settings') {
+    if (rawSub && ROUTE_SET_SUB.includes(rawSub)) settingsSection = rawSub;
+    applySettingsSection();
+  }
+
+  renderLog();
+  renderCommentBar();
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'rewards')   renderRewardsTab();
+  if (tab === 'search')    renderSearch();
+  if (tab === 'settings')  renderSettings();
+}
+
+function navigate(tab, sub) {
+  const hash = sub ? `#/${tab}/${sub}` : `#/${tab}`;
+  if (location.hash === hash) applyRoute();    // same hash → no hashchange event, apply manually
+  else location.hash = hash;                   // hashchange listener picks it up
+}
+
+window.addEventListener('hashchange', applyRoute);
+
 document.querySelectorAll('nav.bottom-nav button').forEach(b => {
   b.onclick = () => {
-    document.querySelectorAll('nav.bottom-nav button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
     const t = b.dataset.tab;
-    document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
-    document.getElementById('tab-' + t).classList.add('active');
-    currentPage = t;
-    renderCommentBar();
-    if (t === 'dashboard') renderDashboard();
-    if (t === 'rewards') renderRewardsTab();
-    if (t === 'search') renderSearch();
-    if (t === 'settings') renderSettings();
+    // Preserve current sub when switching to a tab that has subs, so the URL is bookmarkable
+    const sub = t === 'log' ? logView : (t === 'settings' ? settingsSection : null);
+    navigate(t, sub);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 });
@@ -4073,9 +4102,9 @@ if (state.settings.lastSyncedAt === undefined) state.settings.lastSyncedAt = nul
 if (!Array.isArray(state.comments)) state.comments = [];
 if (!state.settings.activePersonId && state.people.length) state.settings.activePersonId = state.people[0].id;
 applyTheme();
-renderLog();
-renderSettings();
-renderCommentBar();
+// Initial render is driven by the route (reads location.hash → activates the right tab + sub).
+// Default route is #/log/good. applyRoute() calls renderLog + renderCommentBar + the active tab's renderer.
+applyRoute();
 adjustDockPadding();
 window.addEventListener('resize', adjustDockPadding);
 

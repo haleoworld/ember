@@ -164,7 +164,9 @@ Sections are marked with `/* ---------- Name ---------- */` banners. Skim these 
 
 ## Tab layout
 
-Tabs in the bottom nav: **Log** (earn + Behavior section for deductions), **Dashboard** (charts + stats), **Rewards** (redeem), **Search**, **Settings** (CRUD + sync). Tab sections are `<section class="tab" id="tab-{name}">` and shown/hidden by the bottom-nav click handler. When adding a new tab, also update `renderAll()` so all visible tabs re-render after a state change.
+Tabs in the bottom nav: **Log** (earn + Behavior section for deductions), **Dashboard** (charts + stats), **Rewards** (redeem), **Search**, **Settings** (CRUD + sync). Tab sections are `<section class="tab" id="tab-{name}">` and shown/hidden by `applyRoute()`. When adding a new tab, also update `renderAll()` (full-state refresh path) **and** add the slug to `ROUTE_TABS` in the router.
+
+**Routing (hash-based):** `applyRoute()` parses `location.hash` (e.g. `#/log/good`, `#/settings/behavior`) and activates the right tab + sub-section; survives refresh on GitHub Pages without server rewrites. `navigate(tab, sub)` updates the hash; the `hashchange` listener handles back/forward. All tab/pill click handlers go through `navigate()` rather than mutating UI directly. Boot calls `applyRoute()` instead of static `renderLog()/renderSettings()` so a direct visit to `#/dashboard` lands on Dashboard. Valid sub-slugs: `ROUTE_LOG_SUB` (recent/good/misbehavior), `ROUTE_SET_SUB` (people/earn/rewards/behavior/data).
 
 **Settings sub-sections (v7+):** the Settings tab has a horizontal pill strip at the top filtering visible cards into 5 buckets: People, Earn (categories + activities), Rewards (reward categories + rewards), Behavior (misbehavior categories + items), Data (export/import + cloud sync + danger zone). Each `.settings-card` carries a `data-settings-section="..."` attribute; `applySettingsSection()` toggles visibility based on the `settingsSection` global. When adding a new settings card, tag it with the right section.
 
