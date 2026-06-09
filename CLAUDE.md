@@ -168,7 +168,7 @@ Tabs in the bottom nav: **Log** (earn + Behavior section for deductions), **Dash
 
 **Settings sub-sections (v7+):** the Settings tab has a horizontal pill strip at the top filtering visible cards into 5 buckets: People, Earn (categories + activities), Rewards (reward categories + rewards), Behavior (misbehavior categories + items), Data (export/import + cloud sync + danger zone). Each `.settings-card` carries a `data-settings-section="..."` attribute; `applySettingsSection()` toggles visibility based on the `settingsSection` global. When adding a new settings card, tag it with the right section.
 
-**Log tab structure:** person row → hero card → activity grid (by category) → recent list → collapsed "Behavior (deductions)" section. The Behavior toggle (`#behavior-toggle`) shows/hides `#misbehavior-list`; default state is collapsed so positive actions stay front-and-center.
+**Log tab structure:** person row → hero card → **horizontal pill strip** (`#log-sections`: 📋 Recent / ✨ Good behaviors / ⚠️ Misbehaviors) → exactly one view visible at a time. `logView` global (default `'good'`) + `applyLogView()` toggles `[data-log-view]` containers. Reuses `.settings-sections`/`.log-sections` shared styling.
 
 The bottom nav and the comment bar live together inside a single fixed `.bottom-dock`. The dock's height is measured at runtime by `adjustDockPadding()` (called on boot + resize) which sets `body { padding-bottom }` so content never hides behind it — don't hardcode that padding.
 

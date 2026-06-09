@@ -286,18 +286,6 @@
   /* Behavior (deduction) buttons — red accent regardless of category color */
   .activity-btn.deduct-btn .a-pts { color: var(--danger); background: var(--danger-soft); }
   .activity-btn.deduct-btn:hover { border-color: var(--danger); }
-  .behavior-toggle {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: none; border: none; padding: 0;
-    color: var(--text-muted); font-size: 13px; font-weight: 600;
-    cursor: pointer;
-  }
-  .behavior-toggle .chev {
-    display: inline-block; transition: transform .15s;
-    font-size: 10px; color: var(--text-dim);
-  }
-  .behavior-toggle.open .chev { transform: rotate(90deg); }
-  .behavior-toggle .muted { color: var(--text-dim); font-weight: 500; font-size: 11px; }
 
   /* Recent activity list */
   .recent-list {
@@ -434,7 +422,8 @@
     margin-bottom: 14px;
     overflow: hidden;
   }
-  .settings-sections {
+  .settings-sections,
+  .log-sections {
     display: flex;
     gap: 4px;
     padding: 4px;
@@ -445,8 +434,10 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  .settings-sections::-webkit-scrollbar { display: none; }
-  .settings-sections .seg-btn {
+  .settings-sections::-webkit-scrollbar,
+  .log-sections::-webkit-scrollbar { display: none; }
+  .settings-sections .seg-btn,
+  .log-sections .seg-btn {
     flex: 1 1 auto;
     flex-shrink: 0;
     padding: 8px 12px;
@@ -460,7 +451,8 @@
     border: none;
     cursor: pointer;
   }
-  .settings-sections .seg-btn.active {
+  .settings-sections .seg-btn.active,
+  .log-sections .seg-btn.active {
     background: var(--bg-elevated);
     color: var(--text);
     box-shadow: var(--shadow);
@@ -980,18 +972,26 @@
       </div>
     </div>
 
-    <div class="section-title">Log activity <span class="right" id="log-hint">Tap any activity →</span></div>
-    <div id="activity-list"></div>
-
-    <div class="section-title">Recent <span class="right"><button class="filter-pill" id="show-all-recent">Show all</button></span></div>
-    <div id="recent-list"></div>
-
-    <div class="section-title" style="margin-top:24px;">
-      <button class="behavior-toggle" id="behavior-toggle">
-        <span class="chev">▸</span> Behavior <span class="muted">(deductions)</span>
-      </button>
+    <div class="log-sections" id="log-sections">
+      <button class="seg-btn" data-log-view="recent">📋 Recent</button>
+      <button class="seg-btn active" data-log-view="good">✨ Good behaviors</button>
+      <button class="seg-btn" data-log-view="misbehavior">⚠️ Misbehaviors</button>
     </div>
-    <div id="misbehavior-list" style="display:none;"></div>
+
+    <div data-log-view="good">
+      <div id="activity-list"></div>
+    </div>
+
+    <div data-log-view="recent" style="display:none;">
+      <div id="recent-list"></div>
+      <div style="text-align:center; margin-top:12px;">
+        <button class="filter-pill" id="show-all-recent">Show all</button>
+      </div>
+    </div>
+
+    <div data-log-view="misbehavior" style="display:none;">
+      <div id="misbehavior-list"></div>
+    </div>
   </section>
 
   <!-- DASHBOARD TAB -->
@@ -1366,6 +1366,7 @@ function defaultMisbehaviors() {
     { id: uid(), name: 'Mean words',               basePoints: 4, emoji: '😠', categoryId: MC.unkindness },
     // Avoiding learning (×2)
     { id: uid(), name: 'Refused homework',         basePoints: 5, emoji: '📕', categoryId: MC.learning },
+    { id: uid(), name: 'Procrastinating',          basePoints: 4, emoji: '🐌', categoryId: MC.learning },
     // Avoiding chores (×1.5)
     { id: uid(), name: "Wouldn't help when asked", basePoints: 3, emoji: '🙅', categoryId: MC.chore },
     // Hygiene neglect (×1)
@@ -1840,13 +1841,22 @@ document.getElementById('show-all-recent').onclick = (e) => {
   renderRecent();
 };
 
-document.getElementById('behavior-toggle').onclick = (e) => {
-  const list = document.getElementById('misbehavior-list');
-  const btn = document.getElementById('behavior-toggle');
-  const open = list.style.display !== 'none';
-  list.style.display = open ? 'none' : 'block';
-  btn.classList.toggle('open', !open);
-};
+let logView = 'good';
+function applyLogView() {
+  document.querySelectorAll('#tab-log [data-log-view]').forEach(el => {
+    if (el.classList.contains('seg-btn')) {
+      el.classList.toggle('active', el.dataset.logView === logView);
+    } else {
+      el.style.display = (el.dataset.logView === logView) ? '' : 'none';
+    }
+  });
+}
+document.querySelectorAll('#log-sections .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    logView = btn.dataset.logView;
+    applyLogView();
+  });
+});
 
 /* ---------- Totals & filters ---------- */
 function isDeduct(r) { return r.kind === 'deduct'; }
@@ -3990,6 +4000,7 @@ function renderLog() {
   renderActivityList();
   renderRecent();
   renderMisbehaviorList();
+  applyLogView();
 }
 function renderAll() {
   renderLog();
