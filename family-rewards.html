@@ -1098,6 +1098,10 @@
     <div class="settings-card" data-settings-section="earn">
       <h3>Activities <button class="add" data-action="add-activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
       <div class="settings-body" id="activities-list"></div>
+      <div style="padding: 4px 16px 14px;">
+        <button class="btn btn-secondary" id="btn-load-default-activities" style="font-size: 12px;">+ Add any missing default activities</button>
+        <p style="margin: 8px 0 0; font-size: 11px; color: var(--text-dim);">Adds any starter activities that aren't already in your list (matched by name). Safe — won't touch your custom activities.</p>
+      </div>
     </div>
 
     <div class="settings-card" data-settings-section="rewards">
@@ -1128,6 +1132,10 @@
     <div class="settings-card" data-settings-section="behavior">
       <h3>Behavior items <button class="add" data-action="add-misbehavior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></h3>
       <div class="settings-body" id="misbehaviors-list"></div>
+      <div style="padding: 4px 16px 14px;">
+        <button class="btn btn-secondary" id="btn-load-default-misbehaviors" style="font-size: 12px;">+ Add any missing default behavior items</button>
+        <p style="margin: 8px 0 0; font-size: 11px; color: var(--text-dim);">Adds any starter behavior items that aren't already in your list (matched by name). Safe — won't touch your custom items.</p>
+      </div>
     </div>
 
     <div class="settings-card" data-settings-section="data">
@@ -3633,6 +3641,47 @@ document.getElementById('btn-reset-rewards').onclick = () => {
     renderAll();
     toast('Rewards reset to 21 suggested defaults');
   }
+};
+
+// Non-destructive merge: add any default activities/misbehaviors whose
+// `name` isn't already present in live state. New items get fresh uid()s
+// (defaultData() already generated them) but inherit the right categoryId
+// from the default list, which is created against THIS session's category ids.
+document.getElementById('btn-load-default-activities').onclick = () => {
+  const fresh = defaultData();
+  // Build a name → id map from fresh activity categories matched to live categories by name
+  const catMap = {};
+  fresh.categories.forEach(fc => {
+    const live = state.categories.find(c => c.name === fc.name);
+    if (live) catMap[fc.id] = live.id;
+  });
+  const existingNames = new Set(state.activities.map(a => a.name));
+  const toAdd = fresh.activities
+    .filter(a => !existingNames.has(a.name))
+    .map(a => ({ ...a, categoryId: catMap[a.categoryId] || a.categoryId }));
+  if (toAdd.length === 0) { toast('Already have every default activity'); return; }
+  // Skip any whose category we couldn't match (rare — only if user renamed/deleted categories)
+  const matched = toAdd.filter(a => state.categories.find(c => c.id === a.categoryId));
+  const skipped = toAdd.length - matched.length;
+  state.activities = state.activities.concat(matched);
+  save();
+  renderAll();
+  toast(`Added ${matched.length} default activit${matched.length===1?'y':'ies'}${skipped > 0 ? ` · skipped ${skipped} (category missing)` : ''}`);
+};
+
+document.getElementById('btn-load-default-misbehaviors').onclick = () => {
+  // Misbehavior categories use stable `mb-*` ids, so categoryId mapping is direct.
+  const existingNames = new Set((state.misbehaviors||[]).map(m => m.name));
+  const toAdd = defaultMisbehaviors().filter(m => !existingNames.has(m.name));
+  if (toAdd.length === 0) { toast('Already have every default behavior item'); return; }
+  // Safety: ensure the misbehavior categories exist
+  if (!Array.isArray(state.misbehaviorCategories) || state.misbehaviorCategories.length === 0) {
+    state.misbehaviorCategories = defaultMisbehaviorCategories();
+  }
+  state.misbehaviors = (state.misbehaviors||[]).concat(toAdd);
+  save();
+  renderAll();
+  toast(`Added ${toAdd.length} default behavior item${toAdd.length===1?'':'s'}`);
 };
 
 document.getElementById('btn-clear-records').onclick = () => {
