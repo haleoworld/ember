@@ -334,6 +334,19 @@
   }
   .recent-row button.del:hover { color: var(--danger); background: var(--danger-soft); }
   .recent-row button.del svg { width: 16px; height: 16px; display: block; }
+  .recent-row button.edit {
+    color: var(--text-dim);
+    padding: 6px; border-radius: 8px;
+    transition: color .12s, background .12s;
+  }
+  .recent-row button.edit:hover { color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+  .recent-row button.edit svg { width: 16px; height: 16px; display: block; }
+  .recent-row .rr-detail {
+    font-size: 11px; color: var(--text-dim);
+    margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-style: italic;
+  }
   .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -641,6 +654,35 @@
   }
   .comment-del:hover { color: var(--danger); background: var(--danger-soft); }
   .comment-del svg { width: 16px; height: 16px; }
+  .comment-edit {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .comment-edit:hover { color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+  .comment-edit svg { width: 14px; height: 14px; }
+  .comment-edit-form { display: flex; flex-direction: column; gap: 6px; }
+  .comment-edit-form textarea {
+    width: 100%; min-height: 60px; max-height: 200px;
+    padding: 8px 10px;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-family: inherit; font-size: 14.5px; line-height: 1.45;
+    resize: vertical;
+    outline: none;
+  }
+  .comment-edit-actions { display: flex; gap: 6px; }
+  .comment-edit-actions button {
+    font-size: 12px; padding: 5px 12px;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    cursor: pointer; font-weight: 600;
+  }
+  .comment-edit-actions .save { background: var(--primary); color: #fff; border-color: var(--primary); }
   .comment-input-bar {
     flex-shrink: 0;
     display: flex; gap: 8px; align-items: flex-end;
@@ -1292,7 +1334,7 @@ function defaultMisbehaviors() {
 function defaultData() {
   const catH = uid(), catL = uid(), catC = uid(), catK = uid(), catS = uid(), catB = uid();
   return {
-    version: 6,
+    version: 7,
     settings: { theme: 'auto', activePersonId: null, lastSaved: null, lastSyncedAt: null, gistId: '', gistToken: '' },
     people: [
       { id: uid(), name: 'Child 1', color: PERSON_COLORS[0], emoji: PERSON_EMOJIS[0] },
@@ -1326,6 +1368,7 @@ function defaultData() {
       // Kindness
       { id: uid(), name: 'Share with sibling',    categoryId: catK, basePoints: 8,  emoji: '🤝' },
       { id: uid(), name: 'Help family member',    categoryId: catK, basePoints: 8,  emoji: '💞' },
+      { id: uid(), name: 'Cooperate with family', categoryId: catK, basePoints: 8,  emoji: '👨‍👩‍👧‍👦' },
       { id: uid(), name: 'Use kind words',        categoryId: catK, basePoints: 3,  emoji: '💬' },
       { id: uid(), name: 'No tantrums today',     categoryId: catK, basePoints: 10, emoji: '😌' },
       // Self-care
@@ -1336,6 +1379,7 @@ function defaultData() {
       // Bonus
       { id: uid(), name: 'Helped without asking', categoryId: catB, basePoints: 10, emoji: '🌟' },
       { id: uid(), name: 'Great role model',      categoryId: catB, basePoints: 10, emoji: '🏆' },
+      { id: uid(), name: '勇於表達自己',           categoryId: catB, basePoints: 10, emoji: '🗣️' },
     ],
     rewardCategories: defaultRewardCategories(),
     rewards: defaultRewards(),
@@ -1389,6 +1433,11 @@ function migrate(data) {
       data.misbehaviors = defaultMisbehaviors();
     }
     data.version = 6;
+  }
+  if (data.version < 7) {
+    // v6 → v7: optional per-record metadata — startTime (HH:MM), durationMin (number), note (string).
+    // All optional, no record rewrite needed; legacy records simply lack these fields.
+    data.version = 7;
   }
   // Always guarantee these arrays exist after migration
   if (!Array.isArray(data.rewards)) data.rewards = [];
@@ -1707,6 +1756,12 @@ function renderRecent() {
       metaMid = cat ? cat.name : '';
     }
     const meta = `${p ? escapeHtml(p.name) : 'Unknown'} · ${escapeHtml(metaMid)} · ${formatRelTime(r.timestamp)}`;
+    // Optional detail line: start time / duration / note (v7+)
+    const detailParts = [];
+    if (r.startTime) detailParts.push(escapeHtml(r.startTime));
+    if (r.durationMin) detailParts.push(`${r.durationMin} min`);
+    if (r.note) detailParts.push(`"${escapeHtml(r.note)}"`);
+    const detailLine = detailParts.length ? `<div class="rr-detail">${detailParts.join(' · ')}</div>` : '';
     const row = document.createElement('div');
     row.className = 'recent-row';
     row.innerHTML = `
@@ -1714,9 +1769,12 @@ function renderRecent() {
       <div class="rr-main">
         <div class="rr-name">${escapeHtml(name)}</div>
         <div class="rr-meta">${meta}</div>
+        ${detailLine}
       </div>
       <span class="rr-pts" ${isNeg ? 'style="color:var(--danger);background:var(--danger-soft)"' : ''}>${isNeg ? '−' : '+'}${r.points}</span>
+      <button class="edit" title="Edit details">${iconEdit()}</button>
       <button class="del" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"/></svg></button>`;
+    row.querySelector('.edit').onclick = () => openRecordDetailsModal(r);
     row.querySelector('.del').onclick = () => {
       const prompt = isRed ? 'Remove this redemption? Points will be returned.'
                   : isDed ? 'Remove this deduction? Points will be returned.'
@@ -3216,6 +3274,46 @@ function openMisbehaviorModal(misbehavior) {
   setTimeout(() => document.getElementById('f-name').focus(), 50);
 }
 
+function openRecordDetailsModal(record) {
+  const r = record;
+  const a = isEarn(r) ? state.activities.find(x => x.id === r.activityId) : null;
+  const reward = isRedeem(r) ? state.rewards.find(x => x.id === r.rewardId) : null;
+  const mis = isDeduct(r) ? (state.misbehaviors||[]).find(x => x.id === r.misbehaviorId) : null;
+  const itemName = (a && a.name) || (reward && reward.name) || (mis && mis.name) || 'Entry';
+  const p = personById(r.personId);
+  const kindLabel = isEarn(r) ? 'Activity' : isRedeem(r) ? 'Redemption' : 'Deduction';
+  modalTitle.textContent = 'Edit details';
+  modalBody.innerHTML = `
+    <div style="font-size:13px; color: var(--text-muted); margin-bottom: 14px; line-height:1.5;">
+      <strong>${escapeHtml(itemName)}</strong> · ${escapeHtml(kindLabel)}<br>
+      <span style="color: var(--text-dim);">${p ? escapeHtml(p.name) : 'Unknown'} · ${formatRelTime(r.timestamp)} · ${isEarn(r) ? '+' : '−'}${r.points} pts</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start time (optional)</label>
+        <input id="f-start" type="time" value="${escapeHtml(r.startTime||'')}">
+      </div>
+      <div class="form-group">
+        <label>Duration (min, optional)</label>
+        <input id="f-dur" type="number" min="0" step="1" value="${r.durationMin||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Note (optional)</label>
+      <textarea id="f-note" rows="3" placeholder="e.g. read Charlotte's Web ch. 3">${escapeHtml(r.note||'')}</textarea>
+    </div>`;
+  modalSave.onclick = () => {
+    const st = document.getElementById('f-start').value.trim();
+    const du = parseFloat(document.getElementById('f-dur').value);
+    const nt = document.getElementById('f-note').value.trim();
+    if (st) r.startTime = st; else delete r.startTime;
+    if (isFinite(du) && du > 0) r.durationMin = du; else delete r.durationMin;
+    if (nt) r.note = nt; else delete r.note;
+    save(); renderAll(); closeModal();
+  };
+  openModal();
+}
+
 function renderSwatches(containerId, colors, selected) {
   const cont = document.getElementById(containerId);
   cont.innerHTML = '';
@@ -3592,6 +3690,7 @@ function closeCommentDrawer() {
   document.getElementById('comment-drawer-backdrop').classList.remove('show');
 }
 
+let editingCommentId = null;
 function renderCommentList() {
   const cont = document.getElementById('comment-list');
   cont.innerHTML = '';
@@ -3611,21 +3710,63 @@ function renderCommentList() {
     const when = c.done && c.completedAt
       ? `Done ${new Date(c.completedAt).toLocaleDateString([], { month:'short', day:'numeric' })} · added ${formatRelTime(c.createdAt)}`
       : `Added ${formatRelTime(c.createdAt)}`;
-    item.innerHTML = `
-      <button class="comment-check ${c.done ? 'checked' : ''}" title="${c.done ? 'Mark not done' : 'Mark done'}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </button>
-      <div class="comment-body">
-        <div class="comment-text">${escapeHtml(c.text)}</div>
-        <div class="comment-time">${when}</div>
-      </div>
-      <button class="comment-del" title="Delete">${iconTrash()}</button>`;
-    item.querySelector('.comment-check').onclick = () => toggleComment(c.id);
-    item.querySelector('.comment-del').onclick = () => {
-      if (confirm('Delete this comment?')) deleteComment(c.id);
-    };
+    const isEditing = editingCommentId === c.id;
+    if (isEditing) {
+      item.innerHTML = `
+        <button class="comment-check ${c.done ? 'checked' : ''}" title="${c.done ? 'Mark not done' : 'Mark done'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <div class="comment-body">
+          <div class="comment-edit-form">
+            <textarea class="ce-text" rows="2">${escapeHtml(c.text)}</textarea>
+            <div class="comment-edit-actions">
+              <button class="save">Save</button>
+              <button class="cancel">Cancel</button>
+            </div>
+          </div>
+          <div class="comment-time">${when}</div>
+        </div>`;
+      const ta = item.querySelector('.ce-text');
+      setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 30);
+      item.querySelector('.save').onclick = () => editComment(c.id, ta.value);
+      item.querySelector('.cancel').onclick = () => { editingCommentId = null; renderCommentList(); };
+      ta.onkeydown = (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); editComment(c.id, ta.value); }
+        if (e.key === 'Escape') { editingCommentId = null; renderCommentList(); }
+      };
+    } else {
+      const editBtn = c.done ? '' : `<button class="comment-edit" title="Edit">${iconEdit()}</button>`;
+      item.innerHTML = `
+        <button class="comment-check ${c.done ? 'checked' : ''}" title="${c.done ? 'Mark not done' : 'Mark done'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <div class="comment-body">
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+          <div class="comment-time">${when}</div>
+        </div>
+        ${editBtn}
+        <button class="comment-del" title="Delete">${iconTrash()}</button>`;
+      item.querySelector('.comment-check').onclick = () => toggleComment(c.id);
+      const eb = item.querySelector('.comment-edit');
+      if (eb) eb.onclick = () => { editingCommentId = c.id; renderCommentList(); };
+      item.querySelector('.comment-del').onclick = () => {
+        if (confirm('Delete this comment?')) deleteComment(c.id);
+      };
+    }
     cont.appendChild(item);
   });
+}
+
+function editComment(id, newText) {
+  const c = state.comments.find(x => x.id === id);
+  if (!c) return;
+  const t = (newText || '').trim();
+  if (!t) { alert('Comment cannot be empty. Use delete to remove it.'); return; }
+  c.text = t;
+  editingCommentId = null;
+  save();
+  renderCommentList();
+  renderCommentBar();
 }
 
 function postComment() {

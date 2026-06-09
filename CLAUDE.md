@@ -61,7 +61,7 @@ Credentials (`gistToken`/`gistId`) are set as part of the chosen action, not bef
 
 ```js
 {
-  version: 6,
+  version: 7,
   settings: { theme, activePersonId, lastSaved, lastSyncedAt, gistId, gistToken },
   people:                [{ id, name, color, emoji }],
   categories:            [{ id, name, weight, color }],              // activity categories
@@ -71,9 +71,11 @@ Credentials (`gistToken`/`gistId`) are set as part of the chosen action, not bef
   misbehaviorCategories: [{ id, name, weight, color }],              // multiplier on deduction magnitudes — bigger weight = harder hit
   misbehaviors:          [{ id, name, categoryId, basePoints, emoji }],
   records: [
-    { id, personId, activityId,    timestamp, dateISO, points, kind: 'earn' },
-    { id, personId, rewardId,      timestamp, dateISO, points, kind: 'redeem' },
-    { id, personId, misbehaviorId, timestamp, dateISO, points, kind: 'deduct' }   // points is POSITIVE magnitude; balance subtracts
+    // Every record may also have optional v7+ fields: startTime ("HH:MM"), durationMin (number), note (string).
+    // All three are user-editable post-hoc via the edit pencil on the recent-row; absent on legacy records.
+    { id, personId, activityId,    timestamp, dateISO, points, kind: 'earn',   startTime?, durationMin?, note? },
+    { id, personId, rewardId,      timestamp, dateISO, points, kind: 'redeem', startTime?, durationMin?, note? },
+    { id, personId, misbehaviorId, timestamp, dateISO, points, kind: 'deduct', startTime?, durationMin?, note? }   // points is POSITIVE magnitude; balance subtracts
   ],
   comments: [  // in-app feedback backlog, one thread per page
     { id, page: 'log'|'dashboard'|'rewards'|'settings', text, done, createdAt, completedAt }
@@ -89,19 +91,20 @@ Credentials (`gistToken`/`gistId`) are set as part of the chosen action, not bef
 - Balance = sum(earn points) − sum(redeem points) − sum(deduct points). **Can go negative** — by design, deductions always apply (no floor at 0).
 - Streak = consecutive days with `(earn − deduct) > 0`. Pure-deduct days and break-even days reset the streak.
 
-**Migration:** `migrate(data)` in `load()` chains v1 → v2 → v3 → v4 → v5 → v6.
+**Migration:** `migrate(data)` in `load()` chains v1 → v2 → v3 → v4 → v5 → v6 → v7.
 - v1→v2: stamp `kind:'earn'` on records, seed `rewards` with defaults.
 - v2→v3: add `rewardCategories` (6 defaults). Existing rewards keep their `cost` field; without a `categoryId` they're treated as weight 1 (no behavior change). New rewards via the modal get assigned a `categoryId`.
 - v3→v4: add empty `comments` array.
 - v4→v5: sync backend moved to GitHub Gist — `delete settings.syncUrl`, add `settings.gistId` + `settings.gistToken` (both default `''`).
 - v5→v6: introduce misbehaviors — seed `misbehaviorCategories` (6 defaults, stable `mb-*` ids) and `misbehaviors` (10 defaults). Existing records need no rewrite; new `kind: 'deduct'` records appear going forward.
+- v6→v7: optional per-record metadata fields — `startTime` ("HH:MM"), `durationMin` (number), `note` (string). All three optional; the migrator just bumps `version`. Edited post-hoc via `openRecordDetailsModal()` triggered by the edit pencil on recent rows. Legacy records lack these fields entirely.
 - **MUST be called on remote payloads** before adopting — both `pullFromCloud()` and the *Save & test* handler do this. Skipping migration on remote data caused a real bug on 2026-05-17: cloud data pushed by a v1 client had no `rewards` array, so after adoption `state.rewards.length` threw and the *Add reward* button silently failed.
 
 **Forward-compat hazard for v6:** an OLD v5 client pulling v6 cloud data would see `kind: 'deduct'` records and `isEarn()` (old version: `r.kind !== 'redeem'`) would mistakenly count them as earns. After deploying v6, refresh ALL of Jerry's devices on next use — don't leave a v5 tab open mid-transition. The v6 `isEarn` correctly excludes both `'redeem'` and `'deduct'`.
 
 ## Default seed (see `defaultData()` near top of `<script>`)
 
-**Activity categories** with weights: Hygiene ×1, Learning ×2, Chores ×1.5, Kindness ×2, Self-care ×1, Bonus ×3. 23 starter activities.
+**Activity categories** with weights: Hygiene ×1, Learning ×2, Chores ×1.5, Kindness ×2, Self-care ×1, Bonus ×3. 25 starter activities (incl. "Cooperate with family" in Kindness and "勇於表達自己" in Bonus — Jerry-family-specific character items kept in defaults).
 
 **Reward categories** with weights — deliberately nudge behavior: Bonding & rituals ×0.8, Social & friendships ×0.9, Skills & creativity ×0.9, Experiences ×1.0, Privileges ×1.0, Materials ×1.5. **21 default rewards** (EQ/experience-focused; explicitly NO material defaults — Materials category exists so the user can add their own and have them be naturally more expensive). Base costs span 15–500 pts; weighted actuals span 12 pts (bedtime story) to 500 pts (zoo day). Includes "Make ice cream with daddy" (80 base, Bonding ×0.8 = 64 actual) — a Jerry-family-specific reward kept in defaults.
 
@@ -170,6 +173,8 @@ The bottom nav and the comment bar live together inside a single fixed `.bottom-
 ## Comments / feedback backlog (v4)
 
 An Instagram-style comment bar (the pill in `.comment-bar`) sits just above the four tabs on every page. The badge shows `openCommentCount(currentPage)` — count of not-done comments for the active page. `currentPage` is set in the bottom-nav click handler; if you add navigation elsewhere, update it and call `renderCommentBar()`.
+
+Not-done comments are editable: each open comment has a pencil button that swaps the text for an inline textarea + Save/Cancel (Cmd/Ctrl+Enter saves, Esc cancels). Done comments are locked — uncheck first to edit. `editingCommentId` is a module-scope global; only one comment can be in edit mode at a time.
 
 Tapping the pill opens `#comment-drawer-backdrop` (a slide-up sheet, z-index 105). Each page keeps its own thread (`comments[].page`). The drawer = scrollable `#comment-list` (flex:1) + pinned `.comment-input-bar` (auto-growing `<textarea>`, capped 120px). Posting appends to the bottom and scrolls down; Cmd/Ctrl+Enter posts, plain Enter is a newline (mobile-friendly). Each comment row has a checkbox (`toggleComment` → strikethrough + `completedAt`) and a delete button. Open/All filter is `commentFilter`. The ⧉ button calls `copyAllComments()` → `commentsAsMarkdown()`, a checklist grouped by page (`## Log` / `## Dashboard` / `## Rewards` / `## Settings`, `- [ ]`/`- [x]`, newlines flattened), copied via `copyText()` (clipboard API with execCommand fallback). Comments persist in `state.comments` and sync like everything else.
 
