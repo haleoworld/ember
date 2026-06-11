@@ -1214,6 +1214,7 @@
           <button class="btn btn-secondary" id="btn-sync-push">Push to cloud</button>
         </div>
         <p id="sync-status-text" style="margin: 10px 0 0; font-size: 12px; color: var(--text-dim);"></p>
+        <p id="sync-file-note" style="margin: 6px 0 0; font-size: 12px;"></p>
         <p id="sync-gist-link" style="margin: 6px 0 0; font-size: 12px; color: var(--text-muted);"></p>
         <details style="margin-top: 14px;">
           <summary style="cursor:pointer; font-size: 13px; font-weight: 600; color: var(--primary);">First-time setup instructions (2 minutes)</summary>
@@ -1368,6 +1369,7 @@ function defaultRewards() {
     { id: uid(), name: 'Stargazing night',            cost: 60,  emoji: '✨', color: '#8b5cf6', categoryId: RC.bonding },
     { id: uid(), name: 'Family picnic outing',        cost: 80,  emoji: '🧺', color: '#10b981', categoryId: RC.bonding },
     { id: uid(), name: 'Make ice cream with daddy',   cost: 80,  emoji: '🍦', color: '#ec4899', categoryId: RC.bonding },
+    { id: uid(), name: "McDonald's hash brown with daddy", cost: 31, emoji: '🥔', color: '#f59e0b', categoryId: RC.bonding },
     // Social & friendships
     { id: uid(), name: 'Drawing/craft with a friend', cost: 80,  emoji: '🎨', color: '#ec4899', categoryId: RC.social },
     { id: uid(), name: 'Friend over for playdate',    cost: 100, emoji: '🤝', color: '#14b8a6', categoryId: RC.social },
@@ -1431,6 +1433,7 @@ function defaultMisbehaviors() {
     // Self-care neglect (×1)
     { id: uid(), name: 'Picky / refused food',     basePoints: 3, emoji: '🍽️', categoryId: MC.selfcare },
     { id: uid(), name: 'Not in bed on time',       basePoints: 3, emoji: '🛌', categoryId: MC.selfcare },
+    { id: uid(), name: 'Junk snack after waking',  basePoints: 5, emoji: '🍭', categoryId: MC.selfcare },
     { id: uid(), name: 'Scratched eczema area',    basePoints: 5, emoji: '🤚', categoryId: MC.selfcare },
     { id: uid(), name: 'Forgot to fasten seatbelt',basePoints: 3, emoji: '🚨', categoryId: MC.selfcare },
   ];
@@ -1483,6 +1486,7 @@ function defaultData() {
       { id: uid(), name: 'Bedtime on time',            categoryId: catS, basePoints: 8,  emoji: '😴' },
       { id: uid(), name: 'Resisted scratching eczema', categoryId: catS, basePoints: 5,  emoji: '💪' },
       { id: uid(), name: 'Fastened seatbelt',          categoryId: catS, basePoints: 3,  emoji: '💺' },
+      { id: uid(), name: 'No junk snack after waking',  categoryId: catS, basePoints: 5,  emoji: '🍎' },
       // Bonus
       { id: uid(), name: 'Helped without asking', categoryId: catB, basePoints: 10, emoji: '🌟' },
       { id: uid(), name: 'Great role model',      categoryId: catB, basePoints: 10, emoji: '🏆' },
@@ -1847,7 +1851,9 @@ const AI_MODEL = 'claude-haiku-4-5';
 // to live in browser state. Intended for self-hosted setups (Tailscale Serve etc.) where the
 // HTML is served from a machine the user controls and the config file is git-ignored.
 let runtimeAiKey = '';
-let configFromFile = null;   // { anthropicKey?: string }
+let runtimeGistToken = '';
+let runtimeGistId = '';
+let configFromFile = null;   // { anthropicKey?, gistToken?, gistId? }
 const configLoadPromise = (async () => {
   try {
     const r = await fetch('./config.local.json', { cache: 'no-store' });
@@ -1856,6 +1862,22 @@ const configLoadPromise = (async () => {
     configFromFile = j;
     if (typeof j.anthropicKey === 'string' && j.anthropicKey.trim()) {
       runtimeAiKey = j.anthropicKey.trim();
+    }
+    // Gist sync credentials from the file take precedence over the localStorage settings,
+    // so a self-hosted device syncs without pasting token + id into the app UI. They're
+    // applied to state in memory only — syncPayload() strips them from uploads, and they're
+    // not persisted to localStorage unless the user saves.
+    if (typeof j.gistToken === 'string' && j.gistToken.trim()) {
+      runtimeGistToken = j.gistToken.trim();
+    }
+    if (typeof j.gistId === 'string' && j.gistId.trim()) {
+      runtimeGistId = extractGistId(j.gistId.trim());
+    }
+    if ((runtimeGistToken || runtimeGistId) && typeof state !== 'undefined' && state && state.settings) {
+      if (runtimeGistToken) state.settings.gistToken = runtimeGistToken;
+      if (runtimeGistId) state.settings.gistId = runtimeGistId;
+      // Initial silent pull now that creds exist (boot's own pull ran before this fetch resolved).
+      if (state.settings.gistToken && state.settings.gistId) pullFromCloud().catch(() => {});
     }
   } catch (_) {
     // No config file present (likely 404 on GitHub Pages — that's fine; fall back to settings).
@@ -3015,8 +3037,19 @@ async function pullFromCloud(opts = {}) {
 function renderSyncCard() {
   const tokenInput = document.getElementById('sync-token');
   const gistInput = document.getElementById('sync-gist');
-  if (tokenInput) tokenInput.value = state.settings.gistToken || '';
-  if (gistInput) gistInput.value = state.settings.gistId || '';
+  const fileGist = !!(runtimeGistToken || runtimeGistId);   // creds came from config.local.json
+  if (tokenInput) {
+    tokenInput.value = runtimeGistToken ? '••• loaded from config.local.json •••' : (state.settings.gistToken || '');
+    tokenInput.disabled = !!runtimeGistToken;
+  }
+  if (gistInput) {
+    gistInput.value = state.settings.gistId || '';
+    gistInput.disabled = !!runtimeGistId;
+  }
+  const fileNote = document.getElementById('sync-file-note');
+  if (fileNote) fileNote.innerHTML = fileGist
+    ? '<span style="color:var(--success)">✓ Sync credentials loaded from <code>config.local.json</code> · auto-syncing · fields locked</span>'
+    : '';
   const link = document.getElementById('sync-gist-link');
   if (link) {
     link.innerHTML = state.settings.gistId
