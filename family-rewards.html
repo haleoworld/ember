@@ -287,6 +287,28 @@
   .activity-btn.deduct-btn .a-pts { color: var(--danger); background: var(--danger-soft); }
   .activity-btn.deduct-btn:hover { border-color: var(--danger); }
 
+  /* Floating action button: AI quick log — visible only on the Log tab (via body[data-tab]) */
+  .log-fab {
+    display: none;
+    position: fixed;
+    bottom: calc(110px + var(--safe-bottom, 0px));
+    right: 18px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #9333ea);
+    color: white;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 50;
+    border: none;
+    transition: transform .15s, box-shadow .15s;
+  }
+  body[data-tab="log"] .log-fab { display: flex; }
+  .log-fab:hover { transform: scale(1.06); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5); }
+  .log-fab:active { transform: scale(0.94); }
+  .log-fab svg { width: 26px; height: 26px; }
+
   /* Recent activity list */
   .recent-list {
     background: var(--bg-elevated);
@@ -1158,6 +1180,23 @@
     </div>
 
     <div class="settings-card" data-settings-section="data">
+      <h3>AI quick log <span style="font-size:11px; font-weight:500; color:var(--text-dim); margin-left:6px;">optional</span></h3>
+      <div class="settings-body" style="padding: 14px 16px;">
+        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Adds a ⚡ button on the Log tab. Type a quick description ("threw a tantrum", "brushed teeth") and Claude picks the matching activity or behavior item. Uses Claude Haiku — typically &lt; $0.001 per match. Your key stays in this browser only and is stripped from cloud sync uploads.</p>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Anthropic API key <span style="color: var(--text-dim); font-weight: 400;">(starts with <code>sk-ant-</code>)</span></label>
+          <input id="ai-key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-ai-save">Save key</button>
+          <button class="btn btn-secondary" id="btn-ai-clear">Clear</button>
+        </div>
+        <p id="ai-key-status" style="margin: 10px 0 0; font-size: 12px; color: var(--text-dim);"></p>
+        <p style="margin: 8px 0 0; font-size: 12px; color: var(--text-muted);">Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color: var(--primary)">console.anthropic.com/settings/keys</a>.</p>
+      </div>
+    </div>
+
+    <div class="settings-card" data-settings-section="data">
       <h3>Cloud sync (GitHub Gist) <span id="sync-badge" class="sync-badge" style="display:none"></span></h3>
       <div class="settings-body" style="padding: 14px 16px;">
         <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Auto-saves every change to a private GitHub Gist you own. Every save becomes a versioned revision, so you can roll back to an earlier copy if anything ever goes wrong. Leave the token blank to stay offline (data lives only in this browser).</p>
@@ -1205,6 +1244,13 @@
     </div>
   </section>
 </main>
+
+<button class="log-fab" id="log-fab" title="AI quick log" aria-label="AI quick log">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+    <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+  </svg>
+</button>
 
 <div class="bottom-dock">
 <div class="comment-bar">
@@ -1391,8 +1437,8 @@ function defaultMisbehaviors() {
 function defaultData() {
   const catH = uid(), catL = uid(), catC = uid(), catK = uid(), catS = uid(), catB = uid();
   return {
-    version: 7,
-    settings: { theme: 'auto', activePersonId: null, lastSaved: null, lastSyncedAt: null, gistId: '', gistToken: '' },
+    version: 8,
+    settings: { theme: 'auto', activePersonId: null, lastSaved: null, lastSyncedAt: null, gistId: '', gistToken: '', anthropicKey: '' },
     people: [
       { id: uid(), name: 'Child 1', color: PERSON_COLORS[0], emoji: PERSON_EMOJIS[0] },
       { id: uid(), name: 'Child 2', color: PERSON_COLORS[1], emoji: PERSON_EMOJIS[1] },
@@ -1497,6 +1543,12 @@ function migrate(data) {
     // v6 → v7: optional per-record metadata — startTime (HH:MM), durationMin (number), note (string).
     // All optional, no record rewrite needed; legacy records simply lack these fields.
     data.version = 7;
+  }
+  if (data.version < 8) {
+    // v7 → v8: AI quick-log via Anthropic API. Optional per-device key in settings.anthropicKey
+    // (empty = no AI matching). Stripped from syncPayload like gistToken so the key never reaches the gist.
+    if (data.settings && typeof data.settings.anthropicKey !== 'string') data.settings.anthropicKey = '';
+    data.version = 8;
   }
   // Always guarantee these arrays exist after migration
   if (!Array.isArray(data.rewards)) data.rewards = [];
@@ -1752,12 +1804,13 @@ function renderMisbehaviorList() {
   });
 }
 
-function logMisbehavior(misbehavior, btn) {
+function logMisbehavior(misbehavior, btn, opts) {
   const p = activePerson();
   if (!p) { toast('Pick a person first'); return; }
   const pts = misbehaviorPoints(misbehavior);
   if (pts <= 0) { toast('This behavior has 0 deduction — edit it in Settings'); return; }
-  if (!confirm(`Deduct −${pts} pts from ${p.name} for "${misbehavior.name}"?`)) return;
+  // Skip the confirm when the user already explicitly chose to log via AI flow.
+  if (!(opts && opts.skipConfirm) && !confirm(`Deduct −${pts} pts from ${p.name} for "${misbehavior.name}"?`)) return;
   const rec = {
     id: uid(),
     personId: p.id,
@@ -1781,6 +1834,165 @@ function logMisbehavior(misbehavior, btn) {
   toast(`−${pts} for ${p.name} · ${misbehavior.name}`, {
     undo: () => { state.records = state.records.filter(r => r.id !== rec.id); save(); renderPersonRow(); renderHero(); renderRecent(); renderSearchIfActive(); toast('Removed'); }
   });
+}
+
+/* ---------- AI quick log (Claude Haiku via direct browser call) ---------- */
+const AI_API = 'https://api.anthropic.com/v1/messages';
+const AI_MODEL = 'claude-haiku-4-5';
+
+async function aiMatch(description) {
+  const key = (state.settings.anthropicKey || '').trim();
+  if (!key) throw new Error('No API key. Add one in Settings → ☁️ Data → AI quick log.');
+
+  // Build the catalog: every active activity + misbehavior with id, kind, weighted points, category.
+  const acts = state.activities.map(a => {
+    const cat = state.categories.find(c => c.id === a.categoryId);
+    return { id: a.id, kind: 'activity', name: a.name, category: (cat && cat.name) || '', points: activityPoints(a) };
+  });
+  const mis = (state.misbehaviors || []).map(m => {
+    const cat = (state.misbehaviorCategories || []).find(c => c.id === m.categoryId);
+    return { id: m.id, kind: 'misbehavior', name: m.name, category: (cat && cat.name) || '', points: -misbehaviorPoints(m) };
+  });
+  const all = [...acts, ...mis];
+  if (all.length === 0) throw new Error('No activities or behaviors to match against');
+
+  const catalog = all.map(i => `${i.id} | ${i.kind} ${i.points >= 0 ? '+' : ''}${i.points} | ${i.name} (${i.category})`).join('\n');
+  const system = `You match a parent's plain-language description of a child's behavior to ONE item in this catalog (id | kind +/-pts | name (category)):\n\n${catalog}\n\nRules:\n- Pick the single best-fitting item.\n- "activity" items award points (positive); "misbehavior" items deduct (shown as negative).\n- Set confidence 0.0–1.0. If nothing fits well, return your best guess but set confidence below 0.4.\n- Use the match_item tool — do not respond in plain text.`;
+
+  const resp = await fetch(AI_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: 256,
+      system,
+      tools: [{
+        name: 'match_item',
+        description: 'Pick the best-matching item from the catalog',
+        input_schema: {
+          type: 'object',
+          properties: {
+            item_id: { type: 'string', description: 'The id of the matched item from the catalog' },
+            confidence: { type: 'number', description: '0.0 (no fit) to 1.0 (perfect fit)' },
+          },
+          required: ['item_id', 'confidence']
+        }
+      }],
+      tool_choice: { type: 'tool', name: 'match_item' },
+      messages: [{ role: 'user', content: description }]
+    })
+  });
+
+  if (!resp.ok) {
+    let detail = '';
+    try { const j = await resp.json(); detail = (j.error && j.error.message) || JSON.stringify(j); }
+    catch (_) { detail = await resp.text(); }
+    throw new Error(`API ${resp.status}: ${detail.slice(0, 200)}`);
+  }
+  const data = await resp.json();
+  const tool = (data.content || []).find(c => c.type === 'tool_use');
+  if (!tool || !tool.input) throw new Error('Unexpected response shape');
+  const { item_id, confidence } = tool.input;
+  const matched = all.find(i => i.id === item_id);
+  if (!matched) throw new Error('AI returned an unknown id');
+  return { ...matched, confidence: typeof confidence === 'number' ? confidence : 0.5 };
+}
+
+function openAiLogModal() {
+  const p = activePerson();
+  if (!p) { toast('Pick a person first'); return; }
+  modalTitle.textContent = '⚡ AI quick log';
+  modalBody.innerHTML = `
+    <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">For <strong>${escapeHtml(p.name)}</strong></div>
+    <div class="form-group">
+      <label>Describe what they did</label>
+      <textarea id="ai-desc" rows="2" placeholder="e.g. brushed teeth, threw a tantrum, refused to do homework"></textarea>
+    </div>
+    <div id="ai-status" style="font-size:13px; min-height:20px; color:var(--text-muted);"></div>
+    <div id="ai-result" style="display:none;"></div>`;
+
+  const desc   = document.getElementById('ai-desc');
+  const status = document.getElementById('ai-status');
+  const result = document.getElementById('ai-result');
+  let matched = null;
+  let inFlight = false;
+
+  if (!(state.settings.anthropicKey || '').trim()) {
+    status.innerHTML = '<span style="color:var(--danger)">No API key. Add one in Settings → ☁️ Data → AI quick log.</span>';
+  }
+
+  const renderMatch = () => {
+    if (!matched) { result.style.display = 'none'; return; }
+    const sign = matched.points >= 0 ? '+' : '';
+    const isMis = matched.kind === 'misbehavior';
+    // Look up emoji + live item to render
+    const item = isMis
+      ? state.misbehaviors.find(x => x.id === matched.id)
+      : state.activities.find(x => x.id === matched.id);
+    const emoji = (item && item.emoji) || (isMis ? '⚠️' : '✨');
+    result.innerHTML = `
+      <div style="border:1px solid var(--border-soft); border-radius:12px; padding:14px; margin-top:10px; background:var(--bg-soft);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:32px;">${emoji}</span>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700;">${escapeHtml(matched.name)}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(matched.category)} · ${isMis ? 'misbehavior' : 'activity'}${matched.confidence != null ? ` · ${Math.round(matched.confidence*100)}% match` : ''}</div>
+          </div>
+          <span style="font-weight:700; padding:6px 12px; border-radius:999px; ${isMis ? 'color:var(--danger); background:var(--danger-soft)' : 'color:var(--success); background:var(--success-soft)'};">${sign}${matched.points}</span>
+        </div>
+        ${matched.confidence < 0.5 ? '<div style="font-size:11px; color:var(--text-dim); margin-top:8px;">⚠️ Low confidence — double-check before logging.</div>' : ''}
+      </div>`;
+    result.style.display = '';
+  };
+
+  const findMatch = async () => {
+    const text = desc.value.trim();
+    matched = null;
+    renderMatch();
+    if (!text) { status.textContent = ''; return; }
+    if (!(state.settings.anthropicKey || '').trim()) return;
+    if (inFlight) return;
+    inFlight = true;
+    status.textContent = 'Matching…';
+    try {
+      matched = await aiMatch(text);
+      status.textContent = '';
+      renderMatch();
+    } catch (e) {
+      status.innerHTML = `<span style="color:var(--danger)">${escapeHtml(e.message)}</span>`;
+    } finally {
+      inFlight = false;
+    }
+  };
+
+  let timer = null;
+  desc.oninput = () => { clearTimeout(timer); timer = setTimeout(findMatch, 700); };
+  desc.onkeydown = (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); findMatch(); }
+  };
+
+  modalSave.textContent = 'Log it';
+  modalSave.onclick = () => {
+    if (!matched) { alert('Wait for a match, or type a description first.'); return; }
+    if (matched.kind === 'activity') {
+      const a = state.activities.find(x => x.id === matched.id);
+      if (!a) { alert('Activity not found — pick again'); return; }
+      logActivity(a, null);
+    } else {
+      const m = state.misbehaviors.find(x => x.id === matched.id);
+      if (!m) { alert('Behavior item not found — pick again'); return; }
+      logMisbehavior(m, null, { skipConfirm: true });
+    }
+    closeModal();
+  };
+
+  openModal();
+  setTimeout(() => desc.focus(), 50);
 }
 
 function renderRecent() {
@@ -2658,7 +2870,8 @@ function extractGistId(s) {
 // still readable by anyone with the link, so credentials must stay on the device only.
 function syncPayload() {
   const clean = JSON.parse(JSON.stringify(state));
-  if (clean.settings) { clean.settings.gistToken = ''; clean.settings.gistId = ''; }
+  // Strip secrets: cloud copy must never contain credentials.
+  if (clean.settings) { clean.settings.gistToken = ''; clean.settings.gistId = ''; clean.settings.anthropicKey = ''; }
   return JSON.stringify(clean);
 }
 
@@ -2753,10 +2966,11 @@ async function pullFromCloud(opts = {}) {
       if (!ok) { setSyncStatus('', ''); return; }
     }
     // Keep THIS device's own credentials — the cloud copy is stripped of them.
-    const myToken = state.settings.gistToken, myGistId = state.settings.gistId;
+    const myToken = state.settings.gistToken, myGistId = state.settings.gistId, myAiKey = state.settings.anthropicKey || '';
     state = remote;
     state.settings.gistToken = myToken;
     state.settings.gistId = myGistId;
+    state.settings.anthropicKey = myAiKey;
     state.settings.lastSyncedAt = new Date().toISOString();
     saveLocal();
     renderAll();
@@ -2780,6 +2994,15 @@ function renderSyncCard() {
       : '';
   }
   setSyncStatus(state.settings.lastSyncedAt ? 'ok' : '', '');
+  // AI key card
+  const aiInput = document.getElementById('ai-key');
+  if (aiInput) aiInput.value = state.settings.anthropicKey || '';
+  const aiStatus = document.getElementById('ai-key-status');
+  if (aiStatus) {
+    aiStatus.innerHTML = (state.settings.anthropicKey || '').trim()
+      ? '<span style="color:var(--success)">✓ Key saved · ⚡ FAB on Log tab is live</span>'
+      : '<span style="color:var(--text-dim)">No key yet · the ⚡ button will show a setup hint when tapped</span>';
+  }
 }
 
 /* ---------- Settings: People, Categories, Activities ---------- */
@@ -3629,6 +3852,23 @@ document.getElementById('btn-sync-save').onclick = async () => {
 document.getElementById('btn-sync-push').onclick = () => pushToCloud({ force: true, alertOnFail: true }).then(() => toast('Pushed to cloud'));
 document.getElementById('btn-sync-pull').onclick = () => pullFromCloud({ confirmBeforeReplace: true, force: true, alertOnFail: true });
 
+/* AI quick log: key save/clear + FAB click */
+document.getElementById('btn-ai-save').onclick = () => {
+  const v = document.getElementById('ai-key').value.trim();
+  state.settings.anthropicKey = v;
+  save();
+  renderSyncCard();
+  toast(v ? 'AI key saved' : 'AI key cleared');
+};
+document.getElementById('btn-ai-clear').onclick = () => {
+  state.settings.anthropicKey = '';
+  document.getElementById('ai-key').value = '';
+  save();
+  renderSyncCard();
+  toast('AI key cleared');
+};
+document.getElementById('log-fab').onclick = () => openAiLogModal();
+
 /* ---------- Danger zone ---------- */
 document.getElementById('btn-reset-rewards').onclick = () => {
   if (confirm('Replace your current rewards with the 21 suggested defaults?\n\nCustom rewards you added will be lost. Past redemptions are kept (they\'ll show "Removed reward" only if you also delete the matching default).')) {
@@ -3707,6 +3947,7 @@ function applyRoute() {
   document.querySelectorAll('nav.bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
+  document.body.dataset.tab = tab;   // drives tab-specific CSS like .log-fab visibility
   currentPage = tab;
 
   // Sub-section state (only changes the global if the URL specifies a valid sub;
