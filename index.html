@@ -1182,7 +1182,7 @@
     <div class="settings-card" data-settings-section="data">
       <h3>AI quick log <span style="font-size:11px; font-weight:500; color:var(--text-dim); margin-left:6px;">optional</span></h3>
       <div class="settings-body" style="padding: 14px 16px;">
-        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Adds a ⚡ button on the Log tab. Type a quick description ("threw a tantrum", "brushed teeth") and Claude picks the matching activity or behavior item. Uses Claude Haiku — typically &lt; $0.001 per match. Your key stays in this browser only and is stripped from cloud sync uploads.</p>
+        <p style="margin: 0 0 10px; font-size: 13px; color: var(--text-muted);">Adds a ⚡ button on the Log tab. Type a quick description ("threw a tantrum", "brushed teeth") and Claude picks the matching activity or behavior item. Uses Claude Haiku — typically &lt; $0.001 per match. Your key stays in this browser only and is stripped from cloud sync uploads.<br><br><strong>Self-hosting?</strong> Put the key in a git-ignored <code>config.local.json</code> next to <code>index.html</code> instead — the app loads it at boot and locks this field.</p>
         <div class="form-group" style="margin-bottom: 10px;">
           <label>Anthropic API key <span style="color: var(--text-dim); font-weight: 400;">(starts with <code>sk-ant-</code>)</span></label>
           <input id="ai-key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
@@ -1842,9 +1842,34 @@ function logMisbehavior(misbehavior, btn, opts) {
 const AI_API = 'https://api.anthropic.com/v1/messages';
 const AI_MODEL = 'claude-haiku-4-5';
 
+// Optional local-only config (loaded at boot from ./config.local.json on the same origin).
+// When present, takes precedence over the localStorage settings field so the key never has
+// to live in browser state. Intended for self-hosted setups (Tailscale Serve etc.) where the
+// HTML is served from a machine the user controls and the config file is git-ignored.
+let runtimeAiKey = '';
+let configFromFile = null;   // { anthropicKey?: string }
+const configLoadPromise = (async () => {
+  try {
+    const r = await fetch('./config.local.json', { cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    configFromFile = j;
+    if (typeof j.anthropicKey === 'string' && j.anthropicKey.trim()) {
+      runtimeAiKey = j.anthropicKey.trim();
+    }
+  } catch (_) {
+    // No config file present (likely 404 on GitHub Pages — that's fine; fall back to settings).
+  }
+  // Re-render the sync card if it's already mounted so the UI reflects the loaded state.
+  if (typeof renderSyncCard === 'function' && document.getElementById('ai-key')) {
+    try { renderSyncCard(); } catch (_) {}
+  }
+})();
+
 async function aiMatch(description) {
-  const key = (state.settings.anthropicKey || '').trim();
-  if (!key) throw new Error('No API key. Add one in Settings → ☁️ Data → AI quick log.');
+  await configLoadPromise;   // race-safe: in case user hits FAB before fetch resolves
+  const key = (runtimeAiKey || state.settings.anthropicKey || '').trim();
+  if (!key) throw new Error('No API key. Add one in Settings → ☁️ Data → AI quick log, or put it in config.local.json on your server.');
 
   // Build the catalog: every active activity + misbehavior with id, kind, weighted points, category.
   const acts = state.activities.map(a => {
@@ -1924,8 +1949,9 @@ function openAiLogModal() {
   let matched = null;
   let inFlight = false;
 
-  if (!(state.settings.anthropicKey || '').trim()) {
-    status.innerHTML = '<span style="color:var(--danger)">No API key. Add one in Settings → ☁️ Data → AI quick log.</span>';
+  const effectiveKey = () => (runtimeAiKey || state.settings.anthropicKey || '').trim();
+  if (!effectiveKey()) {
+    status.innerHTML = '<span style="color:var(--danger)">No API key. Add one in Settings → ☁️ Data → AI quick log, or to config.local.json on your server.</span>';
   }
 
   const renderMatch = () => {
@@ -1957,7 +1983,7 @@ function openAiLogModal() {
     matched = null;
     renderMatch();
     if (!text) { status.textContent = ''; return; }
-    if (!(state.settings.anthropicKey || '').trim()) return;
+    if (!effectiveKey()) return;
     if (inFlight) return;
     inFlight = true;
     status.textContent = 'Matching…';
@@ -2998,14 +3024,28 @@ function renderSyncCard() {
       : '';
   }
   setSyncStatus(state.settings.lastSyncedAt ? 'ok' : '', '');
-  // AI key card
+  // AI key card. Three states:
+  //   1. Runtime key loaded from config.local.json — preferred; localStorage field is locked
+  //   2. localStorage key set — works on hosted versions without a config file
+  //   3. Neither — FAB shows a setup hint when tapped
   const aiInput = document.getElementById('ai-key');
-  if (aiInput) aiInput.value = state.settings.anthropicKey || '';
   const aiStatus = document.getElementById('ai-key-status');
-  if (aiStatus) {
-    aiStatus.innerHTML = (state.settings.anthropicKey || '').trim()
-      ? '<span style="color:var(--success)">✓ Key saved · ⚡ FAB on Log tab is live</span>'
-      : '<span style="color:var(--text-dim)">No key yet · the ⚡ button will show a setup hint when tapped</span>';
+  const saveBtn = document.getElementById('btn-ai-save');
+  const clearBtn = document.getElementById('btn-ai-clear');
+  if (runtimeAiKey) {
+    if (aiInput) { aiInput.value = '••• loaded from config.local.json •••'; aiInput.disabled = true; }
+    if (saveBtn) saveBtn.disabled = true;
+    if (clearBtn) clearBtn.disabled = true;
+    if (aiStatus) aiStatus.innerHTML = '<span style="color:var(--success)">✓ Key loaded from <code>config.local.json</code> · ⚡ FAB is live · localStorage field disabled</span>';
+  } else {
+    if (aiInput) { aiInput.value = state.settings.anthropicKey || ''; aiInput.disabled = false; }
+    if (saveBtn) saveBtn.disabled = false;
+    if (clearBtn) clearBtn.disabled = false;
+    if (aiStatus) {
+      aiStatus.innerHTML = (state.settings.anthropicKey || '').trim()
+        ? '<span style="color:var(--success)">✓ Key saved in localStorage · ⚡ FAB is live</span>'
+        : '<span style="color:var(--text-dim)">No key yet · the ⚡ button will show a setup hint when tapped</span>';
+    }
   }
 }
 
