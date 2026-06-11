@@ -4,10 +4,10 @@ A reference for hosting the app, syncing data, and installing it on every device
 
 ## Part 1 — Hosting (GitHub Pages)
 
-The app is hosted on **GitHub Pages** from the repo `haleoworld/frs`. There's nothing to drag or upload manually:
+The app is hosted on **GitHub Pages** from the repo `haleoworld/ember`. There's nothing to drag or upload manually:
 
 1. **Push the file to the repo.** Any change to `index.html` that lands on the Pages-serving branch (e.g. `main`) is published automatically.
-2. **The URL stays constant.** GitHub Pages serves it at `https://haleoworld.github.io/frs/` (or your custom domain if configured). Every device picks up the new version on the next page load.
+2. **The URL stays constant.** GitHub Pages serves it at `https://haleoworld.github.io/ember/` (or your custom domain if configured). Every device picks up the new version on the next page load.
 
 That's the whole deploy step: **push, and it's live.** No build, no servers, no SSL to manage.
 

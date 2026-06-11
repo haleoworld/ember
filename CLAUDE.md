@@ -6,7 +6,7 @@ A single-file HTML behavior-and-reward tracker for Jerry's family. Self-containe
 
 ## File map
 
-- `index.html` — the entire app (HTML + CSS + JS in one file, ~4200 lines after sync + PWA + rewards + comments + misbehaviors + routing + AI quick log). Renamed from `family-rewards.html` on 2026-06-10 so the URL is just `haleoworld.github.io/frs/`.
+- `index.html` — the entire app (HTML + CSS + JS in one file, ~4200 lines after sync + PWA + rewards + comments + misbehaviors + routing + AI quick log). Renamed from `family-rewards.html` on 2026-06-10 so the URL is just `haleoworld.github.io/ember/`.
 - `CLAUDE.md` — this file (project context for future Claude sessions)
 - `DEPLOY.md` — Jerry-facing deployment + install instructions (GitHub Pages + per-platform Add to Home Screen). Refer Jerry here when he asks about hosting, updating, or installing on a new device.
 - No other source files. Nothing to install or build.
@@ -17,7 +17,7 @@ Jerry wants to log kids' incremental activities (housework, homework, sharing, b
 
 ## Hosting & cross-platform access
 
-**Hosting: GitHub Pages** (switched from Netlify on/around 2026-05-26). Jerry pushes the file to his GitHub repo (`haleoworld/frs`); GitHub Pages serves it automatically on push. Free forever, https, zero maintenance. Updates deploy by pushing the new file — no manual drag step.
+**Hosting: GitHub Pages** (switched from Netlify on/around 2026-05-26). Jerry pushes the file to his GitHub repo (`haleoworld/ember`); GitHub Pages serves it automatically on push. Free forever, https, zero maintenance. Updates deploy by pushing the new file — no manual drag step.
 
 **Add to Home Screen.** The HTML includes a PWA manifest (inlined as a base64 data URI), apple-touch-icon, and `apple-mobile-web-app-capable` meta tags so the app installs as a standalone home-screen icon on iOS Safari, Android Chrome, and desktop Chrome/Edge/Safari. Icon is a purple radar/attribute SVG (concentric arcs + an arrow to the center) used for the favicon, apple-touch-icon, and manifest icon.
 
