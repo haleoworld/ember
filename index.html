@@ -829,6 +829,17 @@
     border-color: var(--primary);
     background: var(--bg-elevated);
   }
+  /* iOS renders date/time inputs at a fixed intrinsic width that ignores width:100% and
+     overflows (clips on the right). Stripping the native appearance makes them behave like
+     normal full-width boxes while still opening the native picker on tap. */
+  .form-group input[type="datetime-local"],
+  .form-group input[type="date"],
+  .form-group input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    text-align: left;
+  }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   /* Grid children must be allowed to shrink below their content's intrinsic width,
      or wide native controls (e.g. iOS input[type=time]) overflow and overlap the next column. */
